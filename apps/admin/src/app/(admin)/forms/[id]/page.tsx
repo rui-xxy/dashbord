@@ -1,22 +1,37 @@
 'use client';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataSheet } from '../components/data-sheet';
-import { getFormById, MOCK_SUBMISSIONS } from '@/lib/forms-data';
+import { api } from '@/lib/api';
+import type { FormSubmissionVo } from '@hgbord/shared';
 
 /**
  * 表单数据页 —— /forms/[id]
  *
- * 标题区（返回 + 表单名 + 副标题 + 预览按钮）
+ * 标题区（返回 + 表单名 + 预览按钮）
  * + 白底内容卡内嵌 DataSheet
+ * 数据来自真实 API：GET /api/forms/:id + GET /api/forms/:id/submissions
  */
 export default function FormDataPage() {
   const params = useParams<{ id: string }>();
-  const form = getFormById(params.id);
+  const id = params.id;
 
-  if (!form) {
+  const { data: form, isLoading: formLoading } = useQuery({
+    queryKey: ['forms', id],
+    queryFn: () => api.forms.getById(id),
+    enabled: !!id,
+  });
+
+  const { data: subsData } = useQuery({
+    queryKey: ['forms', id, 'submissions'],
+    queryFn: () => api.forms.listSubmissions(id, { pageSize: 200 }),
+    enabled: !!id,
+  });
+
+  if (!formLoading && !form) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
         <p className="text-muted">未找到该表单</p>
@@ -27,7 +42,8 @@ export default function FormDataPage() {
     );
   }
 
-  const submissions = MOCK_SUBMISSIONS[form.id] ?? [];
+  // FormSubmissionVo → DataSheet 需要的格式
+  const submissions: FormSubmissionVo[] = subsData?.items ?? [];
 
   return (
     <div>
@@ -43,7 +59,7 @@ export default function FormDataPage() {
             className="font-display text-ink text-[24px] leading-[1.2] truncate"
             style={{ letterSpacing: '-0.5px' }}
           >
-            {form.title}
+            {form?.title ?? '加载中…'}
           </h1>
         </div>
         <Button variant="outline" className="shrink-0">
@@ -54,7 +70,13 @@ export default function FormDataPage() {
 
       {/* 内容卡 —— 与列表页同款：白底 + hairline + lift 阴影 */}
       <div className="bg-surface-panel border border-hairline rounded-lg shadow-lift overflow-hidden">
-        <DataSheet schema={form.schema} submissions={submissions} />
+        {form && (
+          <DataSheet
+            formId={form.id}
+            schema={form.schema}
+            submissions={submissions.map((s) => ({ id: s.id, data: s.data, createdAt: s.createdAt }))}
+          />
+        )}
       </div>
     </div>
   );

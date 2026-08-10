@@ -1,10 +1,8 @@
 // ═══════════════════════════════════════════════════════════
 // hgbord 全局唯一 Prisma schema
 // ═══════════════════════════════════════════════════════════
-// 原型阶段用 SQLite（零配置）。迁移到 PostgreSQL 只需：
-//   1. provider 改成 "postgresql"
-//   2. DATABASE_URL 改成 postgresql 连接串
-//   3. pnpm --filter @hgbord/database prisma migrate reset
+// 数据库：PostgreSQL（docker compose up -d 启动）
+// 枚举仍用 String（原型阶段 YAGNI，且方便跨 SQLite/PG 迁移）
 // ═══════════════════════════════════════════════════════════
 
 generator client {
@@ -12,8 +10,7 @@ generator client {
 }
 
 datasource db {
-  // SQLite: 开发期零配置
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -26,7 +23,7 @@ model User {
   phone        String     @unique // 手机号（中国大陆 11 位），全局唯一，作为登录账号
   name         String
   passwordHash String
-  role         String     @default("STAFF") // 对应 Role 枚举（SQLite 无原生 enum，用 String）
+  role         String     @default("STAFF") // 对应 Role 枚举（用 String，便于跨库迁移）
   status       String     @default("ACTIVE") // 对应 UserStatus 枚举
   avatarUrl    String?
   lastLoginAt  DateTime?
@@ -35,4 +32,32 @@ model User {
 
   @@index([role])
   @@index([status])
+}
+
+// ────────────────────────────────────────────────────────────
+// 表单域 —— 动态 Schema（FormSubmission.data 存 JSON，加字段不用改表）
+// ────────────────────────────────────────────────────────────
+
+model Form {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  schema      Json             // FormField[] 字段定义（id/title/type/group/unit/precision/options）
+  status      String           @default("published") // draft / published / closed
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  submissions FormSubmission[]
+
+  @@index([status])
+}
+
+model FormSubmission {
+  id          String   @id @default(cuid())
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId      String
+  data        Json     // { field_date: "2026-08-11", tank_98-1: 82.5, ... }
+  submitterIp String?
+  createdAt   DateTime @default(now())
+
+  @@index([formId, createdAt])
 }

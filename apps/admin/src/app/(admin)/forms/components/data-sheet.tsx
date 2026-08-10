@@ -13,11 +13,13 @@
  * 视觉对齐 DESIGN.md：白底 / hairline / row-wash / 8px 圆角输入
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Undo2, Download, Save, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
+import { api } from '@/lib/api';
 import { DatePicker } from './date-picker';
-import type { FormField, FormSchema, FormSubmission } from '@/lib/forms-data';
+import type { FormField, FormSchema } from '@/lib/forms-data';
 
 type CellValue = string | number | null;
 type RowData = Record<string, CellValue>;
@@ -29,15 +31,28 @@ interface InternalRow {
 }
 
 interface DataSheetProps {
+  formId: string;
   schema: FormSchema;
-  submissions: FormSubmission[];
+  submissions: SubmissionInput[];
 }
 
 const ROW_NO_W = 48; // 行号列固定宽度（px），冻结列 left 偏移基准
 const FROZEN_COLS = 1; // 冻结前 N 列（field_date）
 
-function hydrate(submissions: FormSubmission[]): InternalRow[] {
+/** 父组件传入的提交记录格式（FormSubmissionVo 精简版） */
+interface SubmissionInput {
+  id: string;
+  data: Record<string, string | number | null>;
+  createdAt: string;
+}
+
+function hydrate(submissions: SubmissionInput[]): InternalRow[] {
   return submissions.map((s) => ({ _id: s.id, _state: 'saved' as const, data: { ...s.data } }));
+}
+
+/** 去掉 null（后端 JSON 不需要 null 占位） */
+function stripInternal(data: RowData): Record<string, string | number | null> {
+  return { ...data };
 }
 
 /** 数字字段：校验输入是否合法 */
@@ -87,7 +102,7 @@ function computeGroups(schema: FormSchema): ColumnGroup[] {
   return groups;
 }
 
-export function DataSheet({ schema, submissions }: DataSheetProps) {
+export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
   const [rows, setRows] = useState<InternalRow[]>(() => hydrate(submissions));
   const [deleted, setDeleted] = useState<string[]>([]);
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
@@ -294,13 +309,27 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
     [rows, editing],
   );
 
-  // ── 保存 / 撤销 ──
+  // ── 保存：调用 batchUpdate API，成功后刷新查询缓存 ──
+  const qc = useQueryClient();
+  const saveMut = useMutation({
+    mutationFn: (payload: { created: unknown[]; updated: Array<{ id: string; data: unknown }>; deleted: string[] }) =>
+      api.forms.batchUpdate(formId, payload),
+    onSuccess: () => {
+      // 刷新 submissions 查询（会触发 hydrate 重置本地状态）
+      qc.invalidateQueries({ queryKey: ['forms', formId, 'submissions'] });
+      qc.invalidateQueries({ queryKey: ['forms'] }); // 列表页的 collected 计数也刷新
+      setSavedAt(Date.now());
+      setTimeout(() => setSavedAt(null), 2500);
+    },
+  });
+
   const save = useCallback(() => {
-    setRows((prev) => prev.map((r) => ({ ...r, _state: 'saved' as const, data: { ...r.data } })));
-    setDeleted([]);
-    setSavedAt(Date.now());
-    setTimeout(() => setSavedAt(null), 2500);
-  }, []);
+    const created = rows.filter((r) => r._state === 'created').map((r) => ({ data: stripInternal(r.data) }));
+    const updated = rows
+      .filter((r) => r._state === 'updated' && r._id)
+      .map((r) => ({ id: r._id!, data: stripInternal(r.data) }));
+    saveMut.mutate({ created, updated, deleted });
+  }, [rows, deleted, saveMut]);
 
   const reset = useCallback(() => {
     setRows(hydrate(submissionsRef.current));
@@ -366,9 +395,9 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
               撤销
             </Button>
           )}
-          <Button size="sm" variant={isDirty ? 'primary' : 'outline'} onClick={save} disabled={!isDirty}>
+          <Button size="sm" variant={isDirty ? 'primary' : 'outline'} onClick={save} disabled={!isDirty || saveMut.isPending}>
             <Save className="w-3.5 h-3.5" />
-            保存修改
+            {saveMut.isPending ? '保存中…' : '保存修改'}
           </Button>
         </div>
       </div>

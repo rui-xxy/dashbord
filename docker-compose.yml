@@ -1,0 +1,25 @@
+# PostgreSQL for hgbord dev
+# 启动：docker compose up -d
+# 停止：docker compose down（数据保留在卷里）
+# 重置：docker compose down -v（删除数据卷）
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hgbord-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hengguang123
+      POSTGRES_DB: hgbord
+    ports:
+      - '5432:5432'
+    volumes:
+      - hgbord_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d hgbord']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  hgbord_pgdata:

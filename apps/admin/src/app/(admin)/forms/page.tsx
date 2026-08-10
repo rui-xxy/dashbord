@@ -1,19 +1,25 @@
 'use client';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { Permission } from '@hgbord/shared';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { MOCK_FORMS, type FormVo } from '@/lib/forms-data';
+import { api } from '@/lib/api';
+import { formatDate } from '@/lib/forms-data';
 
 /**
- * 表单管理 —— 我创建好的表单列表
+ * 表单管理 —— 列表页
  *
- * 视觉与 users/page.tsx 同一套：白底内容卡（hairline + lift 阴影）+ 表格 + 行 hover wash。
- * 后端尚未实现，数据来自 lib/forms-data.ts 的原型数据。
+ * 数据来自真实 API：GET /api/forms
  */
 export default function FormsPage() {
   const { can } = useAuth();
+  const { data, isLoading } = useQuery({
+    queryKey: ['forms'],
+    queryFn: () => api.forms.list({ pageSize: 50 }),
+  });
+  const forms = data?.items ?? [];
 
   return (
     <div>
@@ -32,7 +38,6 @@ export default function FormsPage() {
 
       {/* 内容卡 —— 与 users 页同一套：白底 + hairline + lift 阴影 */}
       <div className="bg-surface-panel border border-hairline rounded-lg shadow-lift overflow-hidden">
-        {/* 表格 */}
         <table className="w-full">
           <thead>
             <tr className="bg-surface-inset h-12 text-[12px] font-semibold uppercase tracking-wider text-muted-soft">
@@ -43,56 +48,42 @@ export default function FormsPage() {
             </tr>
           </thead>
           <tbody className="text-[14px]">
-            {MOCK_FORMS.map((form) => (
-              <FormRow key={form.id} form={form} />
+            {isLoading && (
+              <tr>
+                <td colSpan={4} className="text-center text-muted py-16">
+                  加载中…
+                </td>
+              </tr>
+            )}
+            {!isLoading && forms.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center text-muted py-16">
+                  暂无表单
+                </td>
+              </tr>
+            )}
+            {forms.map((form) => (
+              <tr key={form.id} className="row-wash border-t border-hairline-soft h-16">
+                <td className="px-6 font-semibold text-ink">{form.title}</td>
+                <td className="px-4 text-right tnum font-medium text-ink">
+                  {form.collected.toLocaleString('zh-CN')}
+                </td>
+                <td className="px-4 text-right tnum text-muted">{formatDate(form.updatedAt)}</td>
+                <td className="px-6 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/forms/${form.id}`}>数据</Link>
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      预览
+                    </Button>
+                  </div>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
       </div>
     </div>
   );
-}
-
-/** 表单行 —— 名称 + 收集份数 + 更新时间 + 数据/预览 两个按钮 */
-function FormRow({ form }: { form: FormVo }) {
-  return (
-    <tr className="row-wash border-t border-hairline-soft h-16">
-      {/* 表单名称 */}
-      <td className="px-6 font-semibold text-ink">{form.title}</td>
-
-      {/* 收集份数 */}
-      <td className="px-4 text-right tnum font-medium text-ink">
-        {form.collected.toLocaleString('zh-CN')}
-      </td>
-
-      {/* 更新时间 */}
-      <td className="px-4 text-right tnum text-muted">{formatDate(form.updatedAt)}</td>
-
-      {/* 操作：数据 · 预览 */}
-      <td className="px-6 text-right">
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/forms/${form.id}`}>数据</Link>
-          </Button>
-          <Button variant="ghost" size="sm">
-            预览
-          </Button>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-/** 相对时间格式化 */
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date('2026-08-11T12:00:00.000Z');
-  const dayMs = 24 * 60 * 60 * 1000;
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / dayMs);
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  if (diffDays === 0) return `今天 ${time}`;
-  if (diffDays === 1) return `昨天 ${time}`;
-  if (diffDays === 2) return `前天 ${time}`;
-  if (diffDays < 7) return `${diffDays} 天前`;
-  return d.toLocaleDateString('zh-CN');
 }

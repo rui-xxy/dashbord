@@ -107,8 +107,26 @@ export const api = {
     updateStatus: (id: string, status: string) => api.patch(`/users/${id}/status`, { status }) as Promise<UserVo>,
     remove: (id: string) => api.delete(`/users/${id}`) as Promise<{ success: boolean }>,
   },
+  forms: {
+    list: (params: Record<string, unknown> = {}) =>
+      api.get(`/forms?${new URLSearchParams(params as Record<string, string>).toString()}`) as Promise<Paginated<FormVo>>,
+    getById: (id: string) => api.get(`/forms/${id}`) as Promise<FormVo>,
+    listSubmissions: (formId: string, params: Record<string, unknown> = {}) =>
+      api.get(`/forms/${formId}/submissions?${new URLSearchParams(params as Record<string, string>).toString()}`) as Promise<Paginated<FormSubmissionVo>>,
+    updateSubmission: (formId: string, sid: string, data: Record<string, unknown>) =>
+      api.patch(`/forms/${formId}/submissions/${sid}`, { data }) as Promise<FormSubmissionVo>,
+    deleteSubmission: (formId: string, sid: string) =>
+      api.delete(`/forms/${formId}/submissions/${sid}`) as Promise<{ success: boolean }>,
+    batchUpdate: (
+      formId: string,
+      payload: { created?: unknown[]; updated?: Array<{ id: string; data: unknown }>; deleted?: string[] },
+    ) => api.post(`/forms/${formId}/submissions/batch`, payload) as Promise<{ success: boolean; created: number; updated: number; deleted: number }>,
+    getPublic: (id: string) => api.get(`/forms/public/${id}`) as Promise<FormVo>,
+    submitPublic: (id: string, data: Record<string, unknown>) =>
+      doFetch(`/forms/public/${id}/submit`, { method: 'POST', body: JSON.stringify({ data }) }, false) as Promise<FormSubmissionVo>,
+  },
 };
 
-import type { UserVo } from '@hgbord/shared';
+import type { UserVo, FormVo, FormSubmissionVo } from '@hgbord/shared';
 import type { AuthUser } from './auth-context';
 type Paginated<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number };
