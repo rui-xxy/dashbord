@@ -69,35 +69,40 @@ export interface FormSubmission {
 // ═══════════════════════════════════════════════════════════
 // 硫酸车间报表 Schema —— 严格对齐 b2-source form 6 真实字段
 // 数据来源：apps/server/all_forms_debug.json (form id=6)
-// 分页结构：第 1 页"储罐液位"（14 字段）+ 第 2 页"仪表读数"（6 字段）
+// 字段标题沿用真实填报用的储罐编号/名称（2#/3#/拨酸槽 等）
+// 分组按物料类别细分，便于横向对比同组储罐
 // ═══════════════════════════════════════════════════════════
 
 const SULFURIC_SCHEMA: FormSchema = [
-  // ── 储罐液位（单位 %）──
-  { id: 'field_date', title: '日期', type: 'date', group: '储罐液位', width: 110 },
-  // 98% 酸储罐（标题沿用真实填报用的储罐编号/名称）
-  { id: 'tank_98-1', title: '98%酸 2#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_98-2', title: '98%酸 3#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_98-3', title: '98%酸 4#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_98-4', title: '98%酸 拨酸槽', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 110 },
-  // 发烟酸储罐
-  { id: 'tank_fy-1', title: '发烟酸 1#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_fy-2', title: '发烟酸 5#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_fy-3', title: '烟酸拨酸槽', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 100 },
-  { id: 'tank_fy-4', title: '氨基磺酸转运槽', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 120 },
-  // 试剂酸储罐
-  { id: 'tank_jp-1', title: '试剂酸 1#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_jp-2', title: '试剂酸 2#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_jp-3', title: '试剂酸 3#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_jp-4', title: '试剂酸 4#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
-  // 93 酸 / 双氧水
-  { id: 'tank_syc-1', title: '双氧水储罐', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 100 },
+  // ── 基础 ──
+  { id: 'field_date', title: '日期', type: 'date', group: '基础', width: 110 },
 
-  // ── 仪表读数（电表读数，无单位）──
-  { id: 'meter_3', title: '1#电机', type: 'number', group: '仪表读数', precision: 2, width: 90 },
-  { id: 'meter_4', title: '2#电机', type: 'number', group: '仪表读数', precision: 2, width: 90 },
-  { id: 'meter_5', title: '1#电炉', type: 'number', group: '仪表读数', precision: 2, width: 90 },
-  { id: 'meter_6', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, width: 90 },
+  // ── 98%硫酸 储罐液位（%）──
+  { id: 'tank_98-1', title: '2#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_98-2', title: '3#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_98-3', title: '4#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_98-4', title: '拨酸槽', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 80 },
+
+  // ── 发烟硫酸 储罐液位（%）──
+  { id: 'tank_fy-1', title: '1#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_fy-2', title: '5#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_fy-3', title: '烟酸拨酸槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_fy-4', title: '氨基磺酸转运槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 110 },
+
+  // ── 试剂酸 储罐液位（%）──
+  { id: 'tank_jp-1', title: '1#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_jp-2', title: '2#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_jp-3', title: '3#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
+  { id: 'tank_jp-4', title: '4#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
+
+  // ── 其他储罐（%）──
+  { id: 'tank_syc-1', title: '双氧水储罐', type: 'number', group: '其他储罐', precision: 1, unit: '%', width: 100 },
+
+  // ── 仪表读数（电表度数）──
+  { id: 'meter_3', title: '1#电机', type: 'number', group: '仪表读数', precision: 2, width: 80 },
+  { id: 'meter_4', title: '2#电机', type: 'number', group: '仪表读数', precision: 2, width: 80 },
+  { id: 'meter_5', title: '1#电炉', type: 'number', group: '仪表读数', precision: 2, width: 80 },
+  { id: 'meter_6', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, width: 80 },
   { id: 'meter_mgso4_phase2', title: '硫酸镁二期电表', type: 'number', group: '仪表读数', precision: 2, width: 120 },
   { id: 'meter_amino', title: '氨基磺酸电表', type: 'number', group: '仪表读数', precision: 2, width: 110 },
 
