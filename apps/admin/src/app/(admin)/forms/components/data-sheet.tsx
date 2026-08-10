@@ -13,9 +13,10 @@
  * 视觉对齐 DESIGN.md：白底 / hairline / row-wash / 8px 圆角输入
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Plus, Trash2, Undo2, Download, Save } from 'lucide-react';
+import { Plus, Trash2, Undo2, Download, Save, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
+import { DatePicker } from './date-picker';
 import type { FormField, FormSchema, FormSubmission } from '@/lib/forms-data';
 
 type CellValue = string | number | null;
@@ -502,30 +503,47 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
                             ))}
                           </select>
                         ) : (
-                          <input
-                            ref={(el) => {
-                              inputRef.current = el;
-                            }}
-                            // 统一用 text 类型：避免原生 date input 拦截方向键导致日期段滑动
-                            type="text"
-                            inputMode={field.type === 'number' ? 'decimal' : undefined}
-                            placeholder={field.type === 'date' ? 'YYYY-MM-DD' : undefined}
-                            value={draft}
-                            onChange={(e) => setDraft(e.target.value)}
-                            onBlur={() => handleBlur(rowIdx, colIdx)}
-                            onKeyDown={onKeyDown}
-                            className={cn(
-                              'absolute inset-0 px-2.5 text-[14px] text-ink bg-transparent text-center',
-                              isNumber && 'tnum',
-                              'border border-hairline focus:outline-none',
+                          <>
+                            <input
+                              ref={(el) => {
+                                inputRef.current = el;
+                              }}
+                              // 统一用 text 类型：避免原生 date input 拦截方向键导致日期段滑动
+                              type="text"
+                              inputMode={field.type === 'number' ? 'decimal' : undefined}
+                              placeholder={field.type === 'date' ? 'YYYY-MM-DD' : undefined}
+                              value={draft}
+                              onChange={(e) => setDraft(e.target.value)}
+                              onBlur={() => handleBlur(rowIdx, colIdx)}
+                              onKeyDown={onKeyDown}
+                              className={cn(
+                                'absolute inset-0 px-2.5 text-[14px] text-ink bg-transparent text-center',
+                                isNumber && 'tnum',
+                                // 日期字段右侧留空给日历图标
+                                field.type === 'date' ? 'pr-7' : '',
+                                'border border-hairline focus:outline-none',
+                              )}
+                              style={{
+                                boxShadow: invalidNumber
+                                  ? '0 0 0 3px rgba(239, 68, 68, 0.12)'
+                                  : '0 0 0 3px rgba(17, 17, 17, 0.08)',
+                                borderColor: invalidNumber ? '#EF4444' : '#111111',
+                              }}
+                            />
+                            {field.type === 'date' && (
+                              <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10">
+                                <DatePicker
+                                  value={draft}
+                                  onChange={(v) => setDraft(v)}
+                                  trigger={
+                                    <span className="w-5 h-5 flex items-center justify-center text-muted hover:text-ink cursor-pointer">
+                                      <Calendar className="w-3.5 h-3.5" />
+                                    </span>
+                                  }
+                                />
+                              </div>
                             )}
-                            style={{
-                              boxShadow: invalidNumber
-                                ? '0 0 0 3px rgba(239, 68, 68, 0.12)'
-                                : '0 0 0 3px rgba(17, 17, 17, 0.08)',
-                              borderColor: invalidNumber ? '#EF4444' : '#111111',
-                            }}
-                          />
+                          </>
                         )
                       ) : (
                         <div
