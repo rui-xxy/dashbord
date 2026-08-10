@@ -20,39 +20,39 @@ const prisma = new PrismaClient();
 // ═══════════════════════════════════════════════════════════
 
 const SULFURIC_SCHEMA = [
-  // 基础
-  { id: 'field_date', title: '日期', type: 'date', group: '基础', width: 110 },
+  // ── 基础（日期隐藏，提交时自动填今天，对齐原版 layout.hidden:true）──
+  { id: 'field_date', title: '日期', type: 'date', group: '基础', hidden: true, required: true, placeholder: '请选择日期', description: '数据归属日期' },
 
-  // 98%硫酸 储罐液位（%）
-  { id: 'tank_98-1', title: '2#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_98-2', title: '3#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_98-3', title: '4#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_98-4', title: '拨酸槽', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 80 },
+  // ── 98%硫酸 储罐液位（%）──
+  { id: 'tank_98-1', title: '2#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
+  { id: 'tank_98-2', title: '3#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
+  { id: 'tank_98-3', title: '4#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
+  { id: 'tank_98-4', title: '拨酸槽', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 80 },
 
-  // 发烟硫酸 储罐液位（%）
-  { id: 'tank_fy-1', title: '1#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_fy-2', title: '5#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_fy-3', title: '烟酸拨酸槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 90 },
-  { id: 'tank_fy-4', title: '氨基磺酸转运槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 110 },
+  // ── 发烟硫酸 储罐液位（%）──
+  { id: 'tank_fy-1', title: '1#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 70 },
+  { id: 'tank_fy-2', title: '5#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 70 },
+  { id: 'tank_fy-3', title: '烟酸拨酸槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 90 },
+  { id: 'tank_fy-4', title: '氨基磺酸转运槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 110 },
 
-  // 试剂酸 储罐液位（%）
-  { id: 'tank_jp-1', title: '1#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_jp-2', title: '2#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_jp-3', title: '3#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
-  { id: 'tank_jp-4', title: '4#', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 70 },
+  // ── 试剂酸 储罐液位（%）──
+  { id: 'tank_jp-1', title: '1#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
+  { id: 'tank_jp-2', title: '2#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
+  { id: 'tank_jp-3', title: '3#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
+  { id: 'tank_jp-4', title: '4#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
 
-  // 其他储罐
-  { id: 'tank_syc-1', title: '双氧水储罐', type: 'number', group: '其他储罐', precision: 1, unit: '%', width: 100 },
+  // ── 其他储罐 ──
+  { id: 'tank_syc-1', title: '双氧水储罐', type: 'number', group: '其他储罐', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 双氧水', width: 100 },
 
-  // 仪表读数（电表度数）
-  { id: 'meter_3', title: '1#电机', type: 'number', group: '仪表读数', precision: 2, width: 80 },
-  { id: 'meter_4', title: '2#电机', type: 'number', group: '仪表读数', precision: 2, width: 80 },
-  { id: 'meter_5', title: '1#电炉', type: 'number', group: '仪表读数', precision: 2, width: 80 },
-  { id: 'meter_6', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, width: 80 },
-  { id: 'meter_mgso4_phase2', title: '硫酸镁二期电表', type: 'number', group: '仪表读数', precision: 2, width: 120 },
-  { id: 'meter_amino', title: '氨基磺酸电表', type: 'number', group: '仪表读数', precision: 2, width: 110 },
+  // ── 仪表读数（电表度数）──
+  { id: 'meter_3', title: '1#电机', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'meter_4', title: '2#电机', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'meter_5', title: '1#电炉', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'meter_6', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'meter_mgso4_phase2', title: '硫酸镁二期电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 120 },
+  { id: 'meter_amino', title: '氨基磺酸电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 110 },
 
-  // 其他
+  // ── 其他 ──
   { id: 'parkingRecords', title: '停车情况', type: 'text', group: '其他', width: 200 },
 ];
 
@@ -133,7 +133,7 @@ async function seedAdmin() {
 async function seedSulfuricForm() {
   const title = '硫酸车间报表';
 
-  // 表单幂等：按 title 查
+  // 表单幂等：按 title 查；已存在则更新 schema（保证 seed 改动生效）
   let form = await prisma.form.findFirst({ where: { title } });
   if (!form) {
     form = await prisma.form.create({
@@ -146,7 +146,11 @@ async function seedSulfuricForm() {
     });
     console.log(`  ✓  表单已创建: ${form.id} (${title})`);
   } else {
-    console.log(`  ℹ  表单已存在，跳过创建: ${form.id}`);
+    form = await prisma.form.update({
+      where: { id: form.id },
+      data: { schema: SULFURIC_SCHEMA, description: '每日生产数据填报' },
+    });
+    console.log(`  ✓  表单 schema 已更新: ${form.id}`);
   }
 
   // 补齐 30 天提交记录 —— 按 field_date 去重

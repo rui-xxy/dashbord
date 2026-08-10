@@ -112,7 +112,7 @@ export const FieldOption = z.object({
 });
 export type FieldOption = z.infer<typeof FieldOption>;
 
-/** 单个字段定义 —— 描述表单的一列 */
+/** 单个字段定义 —— 描述表单的一列 / 数据页一列 / 填报页一项 */
 export const FormField = z.object({
   id: z.string(),
   title: z.string(),
@@ -122,6 +122,15 @@ export const FormField = z.object({
   precision: z.number().optional(),
   unit: z.string().optional(),
   width: z.number().optional(),
+  // ── 填报相关（对齐 b2-source form 6 schema）──
+  description: z.string().optional(), // 字段说明，灰字小字显示在输入框下方（如"物料: 98酸"）
+  suffix: z.string().optional(), // 单位后缀，显示在数字输入框右侧（如"%"、"千瓦时"）
+  hidden: z.boolean().optional(), // 隐藏字段（不渲染输入框，提交时由代码填值，如 field_date）
+  required: z.boolean().optional(), // 必填
+  min: z.number().optional(),
+  max: z.number().optional(),
+  step: z.number().optional(),
+  placeholder: z.string().optional(),
 });
 export type FormField = z.infer<typeof FormField>;
 

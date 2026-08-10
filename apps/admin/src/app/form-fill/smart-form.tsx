@@ -1,22 +1,16 @@
 'use client';
 /**
- * SmartForm —— 表单填报组件（1:1 对齐 b2-source 原版设计）
+ * SmartForm —— 表单填报组件（对齐 b2-source 原版 + 修原版 bug）
  *
- * 原版行为（apps/client/src/components/SmartForm/index.tsx）：
- * - 按 schema.pages 分页（这里按 group 分页，等价）
- * - 标题居中 + 描述
- * - 进度条 + "第 X 页，共 N 页"（仅多页时）
- * - 页标题 h5 + 虚线下边框 + page.description
- * - 字段单列纵向堆叠，label + 红色必填星号 + help(description 小字)
- * - 数字字段不显示 suffix/unit（原版不渲染）
- * - 日期不默认填今天（原版无默认值）
- * - 底部按钮 flex space-between：上一页 / 下一页 / 提交
- * - 校验仅必填，只校验当前页
- * - 移动端 @media 调 padding/圆角/按钮高度
- * - 提交后绿色对勾 + "再填一份"
+ * 设计要点（基于源码逐行核对 + 用户确认的 3 个决策）：
+ * 1. 按 group 分页（等价原版 schema.pages）
+ * 2. hidden:true 的字段不渲染（修原版 bug，field_date 自动填今天）
+ * 3. 显示 suffix 单位后缀（改进，比原版清晰：储罐显示 %、仪表显示 千瓦时）
+ * 4. 显示 description 字段说明（原版行为：物料: 98酸 / 类型: 电表）
+ * 5. 单列纵向堆叠 + 居中卡片（maxWidth 720）+ 进度条
+ * 6. 底部按钮 flex space-between（上一页/下一页/提交）
  *
- * 视觉用 DESIGN.md 语言（白底卡片 + Cal Sans 标题 + bloom 聚焦），
- * 但布局结构、交互逻辑、字段呈现严格照原版。
+ * 视觉用 DESIGN.md 语言；布局/交互严格照原版。
  */
 import { useMemo, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
@@ -33,10 +27,9 @@ interface SmartFormProps {
   submitting?: boolean;
 }
 
-/** 把扁平 schema 按 group 聚合成页（等价于原版的 schema.pages） */
+/** 把扁平 schema 按 group 聚合成页 */
 interface Page {
   title: string;
-  description?: string;
   fields: FormField[];
 }
 function groupToPages(schema: FormSchema): Page[] {
@@ -50,13 +43,18 @@ function groupToPages(schema: FormSchema): Page[] {
   return pages;
 }
 
+/** 今天的日期 YYYY-MM-DD */
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function SmartForm({ title, description, schema, onSubmit, submitting }: SmartFormProps) {
   const pages = useMemo(() => groupToPages(schema), [schema]);
   const hasMultiplePages = pages.length > 1;
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
 
-  // formData：所有字段值的字典（原版用 Record<string, unknown>，这里用 string 简化）
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     schema.forEach((f) => {
@@ -67,6 +65,8 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const currentPage = pages[currentPageIndex];
+  // 当前页可见字段（过滤掉 hidden）
+  const visibleFields = currentPage.fields.filter((f) => !f.hidden);
   const isFirstPage = currentPageIndex === 0;
   const isLastPage = currentPageIndex === pages.length - 1;
   const progress = hasMultiplePages ? Math.round(((currentPageIndex + 1) / pages.length) * 100) : 0;
@@ -82,12 +82,11 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
     }
   };
 
-  /** 校验当前页（仅必填）—— 对齐原版 validateCurrentPage */
+  /** 校验当前页（仅必填，不校验隐藏字段） */
   const validateCurrentPage = (): boolean => {
     const newErrors: Record<string, string> = {};
-    for (const f of currentPage.fields) {
-      // 必填字段：field_date 必填（其他字段原版默认非必填）
-      if (f.id === 'field_date') {
+    for (const f of visibleFields) {
+      if (f.required) {
         const v = values[f.id];
         if (v === undefined || v === null || v === '') {
           newErrors[f.id] = `${f.title}不能为空`;
@@ -111,9 +110,14 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
 
   const handleSubmit = async () => {
     if (!validateCurrentPage()) return;
-    // 组装数据：数字字段转 number，空值转 null（对齐原版的 Record<string,unknown>）
+    // 组装数据：hidden 的 date 字段自动填今天；number 空→null 非空→Number
     const data: Record<string, string | number | null> = {};
     schema.forEach((f) => {
+      if (f.hidden) {
+        // 隐藏字段（field_date）自动填今天
+        if (f.type === 'date') data[f.id] = todayStr();
+        return;
+      }
       const v = values[f.id];
       if (f.type === 'number') {
         data[f.id] = v === '' ? null : Number(v);
@@ -125,10 +129,10 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
     setSubmitted(true);
   };
 
-  // 提交成功页 —— 绿色对勾 + "再填一份"
+  // 提交成功页
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-soft" style={{ padding: 24 }}>
+      <div className="min-h-screen flex items-center justify-center bg-surface-card" style={{ padding: 24 }}>
         <div className="bg-surface-panel border border-hairline rounded-lg text-center max-w-[480px] w-full shadow-raised" style={{ padding: 48 }}>
           <div className="w-16 h-16 rounded-full bg-success-soft flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-8 h-8 text-success" />
@@ -146,14 +150,11 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
   }
 
   return (
-    <div
-      className="smart-form min-h-screen"
-      style={{ background: '#f5f5f5', padding: '24px 16px' }}
-    >
-      {/* 居中卡片 —— 原版 maxWidth 720, borderRadius 12, boxShadow */}
+    <div className="smart-form min-h-screen bg-surface-card" style={{ padding: '24px 16px' }}>
+      {/* 居中卡片 —— maxWidth 720, 圆角 12, 阴影 */}
       <div className="smart-form-card bg-surface-panel mx-auto rounded-lg shadow-raised" style={{ maxWidth: 720, borderRadius: 12 }}>
         <div style={{ padding: 32 }}>
-          {/* 表单标题 —— 居中 */}
+          {/* 标题区 —— 居中 */}
           <div className="text-center mb-8">
             <h1 className="font-display text-ink text-[22px] mb-2" style={{ letterSpacing: '-0.3px' }}>
               {title}
@@ -178,16 +179,14 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
             </div>
           )}
 
-          {/* 页标题 —— h5 + 虚线下边框 */}
-          {hasMultiplePages && (
-            <div className="mb-6 pb-4" style={{ borderBottom: '1px dashed #e5e7eb' }}>
-              <h2 className="font-display text-ink text-[16px] mb-1">{currentPage.title}</h2>
-            </div>
-          )}
+          {/* 页标题 + 虚线分隔 */}
+          <div className="mb-6 pb-4" style={{ borderBottom: '1px dashed #e5e7eb' }}>
+            <h2 className="font-display text-ink text-[16px]">{currentPage.title}</h2>
+          </div>
 
           {/* 字段列表 —— 单列纵向堆叠 */}
           <div className="space-y-6">
-            {currentPage.fields.map((field) => (
+            {visibleFields.map((field) => (
               <FieldItem
                 key={field.id}
                 field={field}
@@ -198,8 +197,8 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
             ))}
           </div>
 
-          {/* 操作按钮 —— flex space-between（原版布局） */}
-          <div className="mt-8 flex justify-between items-center">
+          {/* 操作按钮 —— flex space-between */}
+          <div className="mt-8 flex justify-between items-center gap-3">
             {hasMultiplePages ? (
               <>
                 <Button
@@ -211,11 +210,7 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
                   上一页
                 </Button>
                 {isLastPage ? (
-                  <Button
-                    className="smart-form-btn h-11 px-6"
-                    disabled={submitting}
-                    onClick={handleSubmit}
-                  >
+                  <Button className="smart-form-btn h-11 px-6" disabled={submitting} onClick={handleSubmit}>
                     {submitting ? '提交中…' : '提交'}
                   </Button>
                 ) : (
@@ -225,11 +220,7 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
                 )}
               </>
             ) : (
-              <Button
-                className="smart-form-btn h-11 px-6 w-full"
-                disabled={submitting}
-                onClick={handleSubmit}
-              >
+              <Button className="smart-form-btn h-11 px-6 w-full" disabled={submitting} onClick={handleSubmit}>
                 {submitting ? '提交中…' : '提交'}
               </Button>
             )}
@@ -249,7 +240,7 @@ export function SmartForm({ title, description, schema, onSubmit, submitting }: 
   );
 }
 
-/** 单个字段 —— label + 必填星号 + 输入控件 + help(description) + error */
+/** 单个字段 —— label + 必填星号 + 输入框(带 suffix) + description 灰字 + error */
 function FieldItem({
   field,
   value,
@@ -261,18 +252,18 @@ function FieldItem({
   error?: string;
   onChange: (v: string) => void;
 }) {
-  // 必填标记（field_date 必填，其余按原版默认非必填）
-  const required = field.id === 'field_date';
+  const required = !!field.required;
+  const hasSuffix = !!field.suffix;
 
   return (
     <div>
-      {/* label */}
+      {/* label + 必填星号 */}
       <label className="block text-[14px] font-medium text-ink mb-1.5">
         {field.title}
         {required && <span className="text-danger ml-1">*</span>}
       </label>
 
-      {/* 输入控件 —— 数字字段不显示 suffix/unit（原版不渲染） */}
+      {/* 输入框 —— 数字字段带 suffix 单位后缀 */}
       {field.type === 'select' ? (
         <select
           value={value}
@@ -289,21 +280,37 @@ function FieldItem({
             </option>
           ))}
         </select>
+      ) : hasSuffix ? (
+        // 带 suffix 的数字输入框 —— 用相对定位把单位放右侧
+        <div className="relative">
+          <Input
+            type="text"
+            inputMode={field.type === 'number' ? 'decimal' : undefined}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder ?? (field.type === 'number' ? '请输入数值' : '')}
+            className={cn('h-11 text-[14px] pr-14', error && 'border-danger')}
+          />
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[13px] text-muted-soft pointer-events-none">
+            {field.suffix}
+          </span>
+        </div>
       ) : (
         <Input
           type={field.type === 'date' ? 'date' : 'text'}
           inputMode={field.type === 'number' ? 'decimal' : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={field.type === 'date' ? '请选择日期' : field.type === 'number' ? '请输入数值' : ''}
+          placeholder={field.placeholder ?? ''}
           className={cn('h-11 text-[14px]', error && 'border-danger')}
         />
       )}
 
-      {/* help —— description 小字（原版的 Form.Item help） */}
-      {/* error 优先于 description 显示 */}
+      {/* description 灰字（输入框下方）+ error 红字（优先） */}
       {error ? (
         <p className="text-[12px] text-danger mt-1">{error}</p>
+      ) : field.description ? (
+        <p className="text-[12px] text-muted-soft mt-1">{field.description}</p>
       ) : null}
     </div>
   );
