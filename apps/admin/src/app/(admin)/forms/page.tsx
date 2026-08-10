@@ -74,8 +74,10 @@ export default function FormsPage() {
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/forms/${form.id}`}>数据</Link>
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      预览
+                    <Button variant="ghost" size="sm" asChild>
+                      <a href={`/form-fill/${form.id}`} target="_blank" rel="noreferrer">
+                        预览
+                      </a>
                     </Button>
                   </div>
                 </td>
