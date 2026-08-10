@@ -582,26 +582,6 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
         </table>
       </div>
 
-      {/* 底部状态条 —— 快捷键说明 */}
-      <div className="flex items-center justify-between px-6 py-3 border-t border-hairline-soft text-[13px]">
-        <span className="text-muted tnum">共 {rows.length} 行</span>
-        <span className="text-muted-soft flex items-center gap-2 flex-wrap justify-end">
-          <Kbd>Enter</Kbd><span>下移</span>
-          <Kbd>Tab</Kbd><span>右移</span>
-          <Kbd>↑↓</Kbd><span>上下</span>
-          <Kbd>←→</Kbd><span>到边界跳列</span>
-          <Kbd>Esc</Kbd><span>取消</span>
-        </span>
-      </div>
     </div>
-  );
-}
-
-/** 小键盘提示 */
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="font-mono text-[11px] bg-surface-soft border border-hairline rounded-xs px-1.5 py-0.5">
-      {children}
-    </kbd>
   );
 }
