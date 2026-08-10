@@ -28,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreateUserDialog } from './components/create-user-dialog';
 import { EditUserDialog } from './components/edit-user-dialog';
 import { RoleDialog } from './components/role-dialog';
@@ -312,7 +313,7 @@ function UserRow({
   );
 }
 
-/** 小型筛选 select（简化实现） */
+/** 筛选下拉（Radix Select，软底样式） */
 function FilterSelect({
   value,
   onChange,
@@ -324,31 +325,34 @@ function FilterSelect({
   placeholder: string;
   options: { value: string; label: string }[];
 }) {
+  const ALL = '__all__';
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-        }}
+    <Select
+      value={value || ALL}
+      onValueChange={(v) => onChange(v === ALL ? '' : v)}
+    >
+      <SelectTrigger
         className={cn(
-          'h-8 pl-2.5 pr-7 text-[12px] font-medium bg-surface-soft border border-transparent rounded-md cursor-pointer focus:outline-none focus:border-accent appearance-none',
+          'w-auto h-8 text-[12px] font-medium border-transparent shadow-none',
+          'bg-surface-soft hover:bg-surface-panel',
+          'focus:border-accent focus:bg-surface-card',
+          'data-[state=open]:border-accent data-[state=open]:bg-surface-card',
           value ? 'text-ink' : 'text-muted',
         )}
-        style={{
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2371717A' d='M5 6.5L1.5 3h7z'/%3E%3C/svg%3E\")",
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 8px center',
-        }}
       >
-        <option value="">{placeholder}</option>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={ALL} className="text-muted">
+          {placeholder}
+        </SelectItem>
         {options.map((o) => (
-          <option key={o.value} value={o.value}>
+          <SelectItem key={o.value} value={o.value}>
             {o.label}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </div>
+      </SelectContent>
+    </Select>
   );
 }
 

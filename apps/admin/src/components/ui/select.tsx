@@ -14,17 +14,20 @@ export const SelectTrigger = forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-8 w-full items-center justify-between gap-2 px-2.5 text-[13px] text-ink',
-      'bg-surface-card border border-hairline rounded-md',
-      'data-[placeholder]:text-muted-soft focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20',
-      'transition-all duration-120 ease-out-expo disabled:opacity-50',
+      'group flex h-8 w-full items-center justify-between gap-2 px-2.5 text-[13px] text-ink',
+      'bg-surface-card border border-hairline rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.03)]',
+      'data-[placeholder]:text-muted-soft',
+      'hover:border-surface-active',
+      'focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(37,99,235,0.24)]',
+      'data-[state=open]:border-accent data-[state=open]:shadow-[0_0_0_3px_rgba(37,99,235,0.24)]',
+      'transition-all duration-120 ease-out-expo disabled:opacity-50 disabled:pointer-events-none',
       className,
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="w-3.5 h-3.5 text-muted-soft" />
+      <ChevronDown className="w-3.5 h-3.5 text-muted-soft transition-transform duration-200 ease-out-expo group-data-[state=open]:rotate-180" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -33,13 +36,15 @@ SelectTrigger.displayName = 'SelectTrigger';
 export const SelectContent = forwardRef<
   ElementRef<typeof SelectPrimitive.Content>,
   ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = 'popper', ...props }, ref) => (
+>(({ className, children, position = 'popper', sideOffset = 4, ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
       position={position}
+      sideOffset={sideOffset}
       className={cn(
-        'relative z-50 min-w-[8rem] overflow-hidden rounded-md bg-surface-card border border-hairline shadow-overlay',
+        'anim-pop relative z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden',
+        'rounded-lg bg-surface-card border border-hairline shadow-overlay',
         className,
       )}
       {...props}
@@ -57,15 +62,18 @@ export const SelectItem = forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex h-8 cursor-pointer select-none items-center rounded-sm pl-7 pr-2 text-[13px] text-ink',
-      'data-[highlighted]:bg-surface-soft data-[highlighted]:outline-none',
+      'relative flex h-8 cursor-pointer select-none items-center rounded-sm pl-7 pr-2 text-[13px] text-body',
+      'transition-colors duration-120 ease-out-expo',
+      'data-[highlighted]:bg-surface-soft data-[highlighted]:text-ink data-[highlighted]:outline-none',
+      'data-[state=checked]:text-ink data-[state=checked]:font-medium',
+      'data-[disabled]:opacity-50 data-[disabled]:pointer-events-none',
       className,
     )}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="w-3.5 h-3.5 text-accent" />
+        <Check className="w-3.5 h-3.5 text-accent" strokeWidth={2.5} />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
