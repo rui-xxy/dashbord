@@ -102,6 +102,21 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
 
   const groups = useMemo(() => computeGroups(schema), [schema]);
 
+  // 每个字段所属分组的索引 —— 用于交替底色（奇数组 #F8F9FA，偶数组 #FFFFFF）
+  const fieldGroupIdx = useMemo(() => {
+    const map: number[] = [];
+    let gi = 0;
+    schema.forEach((f, i) => {
+      const g = f.group ?? '其他';
+      if (i > 0 && g !== (schema[i - 1].group ?? '其他')) gi++;
+      map.push(gi);
+    });
+    return map;
+  }, [schema]);
+
+  /** 分组底色：奇数 index → 浅灰 surface-inset，偶数 → 白 canvas */
+  const groupBg = (gIdx: number) => (gIdx % 2 === 1 ? 'bg-surface-inset' : 'bg-canvas');
+
   const isDirty = useMemo(
     () => rows.some((r) => r._state !== 'saved') || deleted.length > 0,
     [rows, deleted],
@@ -374,9 +389,10 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
                 <th
                   key={g.name}
                   colSpan={g.count}
-                  className="bg-surface-inset text-[11px] font-medium text-muted-soft h-6 px-2 border-b border-hairline text-center whitespace-nowrap"
-                  // 分组之间用稍重的分隔线区分（最后一组不加右边界）
-                  style={gi < groups.length - 1 ? { borderRight: '1px solid #E5E7EB' } : undefined}
+                  className={cn(
+                    'text-[11px] font-medium text-muted-soft h-6 px-2 border-b border-hairline text-center whitespace-nowrap',
+                    groupBg(gi),
+                  )}
                 >
                   {g.count > 1 ? g.name : ''}
                 </th>
@@ -388,12 +404,14 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
               {schema.map((f, i) => {
                 const isFrozen = i < FROZEN_COLS;
                 const left = isFrozen ? ROW_NO_W : undefined;
+                const gIdx = fieldGroupIdx[i];
                 return (
                   <th
                     key={f.id}
                     className={cn(
-                      'bg-surface-inset text-muted-soft text-[12px] font-semibold h-11 px-2.5 border-b border-r last:border-r-0 border-hairline whitespace-nowrap text-center',
-                      isFrozen && 'sticky z-30 bg-surface-panel',
+                      'text-muted-soft text-[12px] font-semibold h-11 px-2.5 border-b border-r border-hairline whitespace-nowrap text-center',
+                      // 冻结列固定白底；其余按所属分组的奇偶交替
+                      isFrozen ? 'sticky z-30 bg-canvas' : groupBg(gIdx),
                     )}
                     style={{
                       ...(left !== undefined ? { left } : {}),
@@ -436,6 +454,7 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
                   const changed = row._state !== 'saved';
                   const isFrozen = colIdx < FROZEN_COLS;
                   const isNumber = field.type === 'number';
+                  const gIdx = fieldGroupIdx[colIdx];
                   // 非法数字（编辑中）的红框提示
                   const invalidNumber = isEditing && isNumber && !isValidNumber(draft);
                   return (
@@ -446,10 +465,11 @@ export function DataSheet({ schema, submissions }: DataSheetProps) {
                         enterEdit(rowIdx, colIdx);
                       }}
                       className={cn(
-                        'relative h-11 border-b border-r last:border-r-0 border-hairline-soft cursor-text px-2.5',
+                        'relative h-11 border-b border-r border-hairline-soft cursor-text px-2.5',
                         'transition-colors duration-120 ease-out-expo',
                         !isEditing && 'row-wash',
-                        isFrozen && 'sticky z-10 bg-surface-panel',
+                        // 冻结列固定白底；其余按所属分组奇偶交替（与表头一致）
+                        isFrozen ? 'sticky z-10 bg-canvas' : groupBg(gIdx),
                         // 编辑态提升层级避免被表头/相邻列盖住
                         isEditing && 'z-30',
                       )}
