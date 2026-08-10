@@ -100,6 +100,13 @@ export class FormController {
     return this.forms.findPublicById(id);
   }
 
+  /** 公开取最近提交记录（填报页显示「上次值」参考） */
+  @Public()
+  @Get('public/:id/submissions/recent')
+  publicRecent(@Param('id') id: string) {
+    return this.forms.listRecentSubmissions(id);
+  }
+
   /** 公开提交（匿名，记录 IP） */
   @Public()
   @Post('public/:id/submit')

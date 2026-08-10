@@ -122,6 +122,8 @@ export const api = {
       payload: { created?: unknown[]; updated?: Array<{ id: string; data: unknown }>; deleted?: string[] },
     ) => api.post(`/forms/${formId}/submissions/batch`, payload) as Promise<{ success: boolean; created: number; updated: number; deleted: number }>,
     getPublic: (id: string) => api.get(`/forms/public/${id}`) as Promise<FormVo>,
+    getRecent: (id: string) =>
+      doFetch(`/forms/public/${id}/submissions/recent`, undefined, false) as Promise<FormSubmissionVo[]>,
     submitPublic: (id: string, data: Record<string, unknown>) =>
       doFetch(`/forms/public/${id}/submit`, { method: 'POST', body: JSON.stringify({ data }) }, false) as Promise<FormSubmissionVo>,
   },

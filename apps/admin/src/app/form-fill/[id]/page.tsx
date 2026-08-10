@@ -2,7 +2,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import type { FormVo } from '@hgbord/shared';
+import type { FormVo, FormSubmissionVo } from '@hgbord/shared';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { SmartForm } from '../smart-form';
@@ -19,6 +19,7 @@ import { SmartForm } from '../smart-form';
 export default function FormFillPage() {
   const params = useParams<{ id: string }>();
   const [form, setForm] = useState<FormVo | null>(null);
+  const [recent, setRecent] = useState<FormSubmissionVo[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -26,9 +27,11 @@ export default function FormFillPage() {
 
   useEffect(() => {
     if (!params.id) return;
-    api.forms
-      .getPublic(params.id)
-      .then((f) => setForm(f))
+    Promise.all([api.forms.getPublic(params.id), api.forms.getRecent(params.id).catch(() => [])])
+      .then(([f, r]) => {
+        setForm(f);
+        setRecent(r);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : '加载失败'))
       .finally(() => setLoading(false));
   }, [params.id]);
@@ -95,8 +98,8 @@ export default function FormFillPage() {
   return (
     <SmartForm
       title={form!.title}
-      description={form!.description}
       schema={form!.schema}
+      recent={recent}
       onSubmit={handleSubmit}
       submitting={submitting}
     />

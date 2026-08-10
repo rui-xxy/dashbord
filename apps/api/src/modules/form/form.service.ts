@@ -63,6 +63,19 @@ export class FormService {
     return toFormVo(form);
   }
 
+  /**
+   * 公开取最近提交记录（用于填报页显示「上次值」参考）
+   * 返回最近 N 条，按时间倒序
+   */
+  async listRecentSubmissions(formId: string, limit = 5) {
+    const items = await this.prisma.formSubmission.findMany({
+      where: { formId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return items.map(toSubmissionVo);
+  }
+
   // ═══════════════════════════════════════════════════════════
   // Submission 查询（管理端 + 公开端都用）
   // ═══════════════════════════════════════════════════════════
