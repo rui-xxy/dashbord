@@ -192,6 +192,18 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 }
 
 function Breadcrumbs({ path }: { path: string }) {
+  // /forms/:id → 表单管理 / 数据
+  if (/^\/forms\/[^/]+$/.test(path)) {
+    return (
+      <div className="flex items-center gap-2 text-[14px]">
+        <span className="text-muted">管理后台</span>
+        <span className="text-muted-faint">/</span>
+        <Link href="/forms" className="text-muted hover:text-ink transition-colors">表单管理</Link>
+        <span className="text-muted-faint">/</span>
+        <span className="text-ink font-medium">数据</span>
+      </div>
+    );
+  }
   const map: Record<string, string> = {
     '/users': '用户管理',
     '/forms': '表单管理',

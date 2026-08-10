@@ -41,6 +41,10 @@ html, body {
 .row-wash { transition: background-color 120ms cubic-bezier(0.22,1,0.36,1); }
 .row-wash:hover { background-color: #F8F9FA; }
 
+/* ═══ Selection —— 选区统一为淡墨色，覆盖系统蓝（DESIGN.md 单色行动层）═══ */
+::selection { background: rgba(17, 17, 17, 0.08); color: inherit; }
+::-moz-selection { background: rgba(17, 17, 17, 0.08); color: inherit; }
+
 /* ═══ Scrollbar ═══ */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #D4D4D8; border-radius: 8px; border: 3px solid #FFFFFF; }
