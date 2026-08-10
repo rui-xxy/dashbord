@@ -15,8 +15,8 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  const phone = process.env.SEED_ADMIN_PHONE ?? '13800000001';
-  const password = process.env.SEED_ADMIN_PASSWORD ?? 'Hgbord@2026';
+  const phone = process.env.SEED_ADMIN_PHONE ?? '18684593792';
+  const password = process.env.SEED_ADMIN_PASSWORD ?? '123456';
   const name = process.env.SEED_ADMIN_NAME ?? '超级管理员';
 
   const existing = await prisma.user.findUnique({ where: { phone } });

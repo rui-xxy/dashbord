@@ -8,7 +8,6 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { RoleBadge, StatusBadge } from '@/components/ui/status';
 import {
   Dialog,
@@ -70,31 +69,31 @@ export default function UsersPage() {
 
   return (
     <div>
-      {/* 标题 + 操作 */}
-      <div className="flex items-end justify-between mb-6">
+      {/* 标题 + 操作 —— display-sm: Cal Sans 28px / 600 / -0.5px */}
+      <div className="flex items-end justify-between mb-8">
         <div>
-          <h1 className="font-display text-ink" style={{ fontSize: 24, letterSpacing: '-0.6px' }}>
+          <h1 className="font-display text-ink text-[28px] leading-[1.2]" style={{ letterSpacing: '-0.5px' }}>
             用户管理
           </h1>
-          <p className="text-[13px] text-muted mt-1">
+          <p className="text-[14px] text-muted mt-1.5">
             {data ? <span className="tnum">共 {data.total} 位用户</span> : '加载中…'}
           </p>
         </div>
         {can(Permission.USER_CREATE) && (
           <CreateUserDialog>
-            <Button variant="accent">
-              <Plus className="w-3.5 h-3.5" />
+            <Button>
+              <Plus className="w-4 h-4" />
               新建用户
             </Button>
           </CreateUserDialog>
         )}
       </div>
 
-      {/* 表格卡 */}
-      <div className="bg-surface-card border border-hairline rounded-xl overflow-hidden">
+      {/* 表格卡 —— 白底内容卡：hairline 边框 + 12px 圆角 + 轻投影 */}
+      <div className="bg-surface-panel border border-hairline rounded-lg shadow-lift overflow-hidden">
         {/* 工具栏 */}
-        <div className="flex items-center gap-2 px-5 py-3 border-b border-hairline-soft">
-          <div className="relative w-56">
+        <div className="flex items-center gap-2.5 px-6 py-4 border-b border-hairline-soft">
+          <div className="relative w-64">
             <Input
               placeholder="搜索姓名或手机号…"
               value={search}
@@ -102,9 +101,9 @@ export default function UsersPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="pl-8 bg-surface-soft border-transparent"
+              className="h-10 pl-10 text-[14px] bg-surface-soft border-transparent"
             />
-            <svg className="w-3.5 h-3.5 text-muted-soft absolute left-2.5 top-1/2 -translate-y-1/2" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg className="w-[18px] h-[18px] text-muted-soft absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="7" cy="7" r="4.5" />
               <path d="M10.5 10.5L14 14" />
             </svg>
@@ -132,13 +131,13 @@ export default function UsersPage() {
           {(search || roleFilter || statusFilter) && (
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => {
                 setSearch('');
                 setRoleFilter('');
                 setStatusFilter('');
                 setPage(1);
               }}
-              className="text-[12px]"
             >
               清除筛选
             </Button>
@@ -148,26 +147,26 @@ export default function UsersPage() {
         {/* 表格 */}
         <table className="w-full">
           <thead>
-            <tr className="bg-surface-inset h-9 text-micro text-muted">
-              <th className="text-left font-semibold px-5">用户</th>
-              <th className="text-left font-semibold px-3">手机号</th>
-              <th className="text-left font-semibold px-3">角色</th>
-              <th className="text-left font-semibold px-3">状态</th>
-              <th className="text-right font-semibold px-3">注册时间</th>
-              <th className="w-12" />
+            <tr className="bg-surface-inset h-12 text-[12px] font-semibold uppercase tracking-wider text-muted-soft">
+              <th className="text-left px-6">用户</th>
+              <th className="text-left px-4">手机号</th>
+              <th className="text-left px-4">角色</th>
+              <th className="text-left px-4">状态</th>
+              <th className="text-right px-4">注册时间</th>
+              <th className="w-14" />
             </tr>
           </thead>
-          <tbody className="text-[13px]">
+          <tbody className="text-[14px]">
             {isLoading && (
               <tr>
-                <td colSpan={6} className="text-center text-muted py-10">
+                <td colSpan={6} className="text-center text-muted py-16">
                   加载中…
                 </td>
               </tr>
             )}
             {!isLoading && users.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center text-muted py-10">
+                <td colSpan={6} className="text-center text-muted py-16">
                   暂无用户
                 </td>
               </tr>
@@ -180,11 +179,11 @@ export default function UsersPage() {
 
         {/* 分页 */}
         {data && data.totalPages > 1 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-hairline-soft text-[12px]">
+          <div className="flex items-center justify-between px-6 py-3.5 border-t border-hairline-soft text-[14px]">
             <span className="text-muted tnum">
               第 <span className="text-ink font-medium">{page}</span> / {data.totalPages} 页 · 共 {data.total} 条
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="icon-sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
                 ←
               </Button>
@@ -218,45 +217,46 @@ function UserRow({
   const isSelf = me?.id === user.id;
 
   return (
-    <tr className="row-wash border-t border-hairline-soft h-11">
-      <td className="px-5">
-        <div className="flex items-center gap-2.5">
+    <tr className="row-wash border-t border-hairline-soft h-14">
+      <td className="px-6">
+        <div className="flex items-center gap-3">
+          {/* avatar-circle：pastel 填充 + 白色首字母 */}
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-semibold shrink-0"
-            style={{ background: gradientFor(user.id) }}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[12px] font-semibold shrink-0"
+            style={{ backgroundColor: pastelFor(user.id) }}
           >
             {user.name.slice(0, 2).toUpperCase()}
           </div>
           <span className="font-semibold text-ink">{user.name}</span>
         </div>
       </td>
-      <td className="px-3 text-muted tnum">{user.phone}</td>
-      <td className="px-3">
+      <td className="px-4 text-muted tnum">{user.phone}</td>
+      <td className="px-4">
         <RoleBadge role={user.role as Role} />
       </td>
-      <td className="px-3">
+      <td className="px-4">
         <StatusBadge status={user.status as UserStatus} />
       </td>
-      <td className="px-3 text-right tnum text-muted text-[12px]">{new Date(user.createdAt).toLocaleDateString('zh-CN')}</td>
-      <td className="px-3">
+      <td className="px-4 text-right tnum text-muted">{new Date(user.createdAt).toLocaleDateString('zh-CN')}</td>
+      <td className="px-4">
         {(canEdit || canChangeRole || canChangeStatus || canDelete) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-7 h-7 flex items-center justify-center text-muted-soft hover:text-ink hover:bg-surface-soft rounded-md transition-colors">
-                <MoreHorizontal className="w-3.5 h-3.5" />
+                <MoreHorizontal className="w-4 h-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {canEdit && (
                 <EditUserDialog user={user}>
-                  <button className="flex h-8 w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 text-[13px] text-ink data-[highlighted]:bg-surface-soft">
+                  <button className="flex h-9 w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2.5 text-[13px] text-ink data-[highlighted]:bg-surface-soft">
                     编辑资料
                   </button>
                 </EditUserDialog>
               )}
               {canChangeRole && !isSelf && (
                 <RoleDialog user={user}>
-                  <button className="flex h-8 w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 text-[13px] text-ink data-[highlighted]:bg-surface-soft">
+                  <button className="flex h-9 w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2.5 text-[13px] text-ink data-[highlighted]:bg-surface-soft">
                     修改角色
                   </button>
                 </RoleDialog>
@@ -273,7 +273,7 @@ function UserRow({
                   <DropdownMenuSeparator />
                   <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
                     <DialogTrigger asChild>
-                      <button className="flex h-8 w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 text-[13px] text-danger data-[highlighted]:bg-surface-soft">
+                      <button className="flex h-9 w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2.5 text-[13px] text-danger data-[highlighted]:bg-surface-soft">
                         删除用户
                       </button>
                     </DialogTrigger>
@@ -283,7 +283,7 @@ function UserRow({
                         <DialogDescription>此操作不可撤销。</DialogDescription>
                       </DialogHeader>
                       <DialogBody>
-                        <p className="text-[13px] text-body">
+                        <p className="text-[14px] text-body">
                           确定要删除用户 <span className="font-semibold text-ink">{user.name}</span>（{user.phone}）吗？该用户的所有数据将被永久移除。
                         </p>
                       </DialogBody>
@@ -333,10 +333,10 @@ function FilterSelect({
     >
       <SelectTrigger
         className={cn(
-          'w-auto h-8 text-[12px] font-medium border-transparent shadow-none',
-          'bg-surface-soft hover:bg-surface-panel',
-          'focus:border-accent focus:bg-surface-card',
-          'data-[state=open]:border-accent data-[state=open]:bg-surface-card',
+          'w-auto h-10 px-3.5 text-[14px] font-medium border-transparent shadow-none',
+          'bg-surface-soft hover:bg-surface-card',
+          'focus:border-ink focus:bg-surface-panel',
+          'data-[state=open]:border-ink data-[state=open]:bg-surface-panel',
           value ? 'text-ink' : 'text-muted',
         )}
       >
@@ -356,16 +356,10 @@ function FilterSelect({
   );
 }
 
-/** 根据用户 id 生成稳定的渐变色（头像用） */
-function gradientFor(seed: string): string {
-  const grads = [
-    'linear-gradient(135deg, #5B8CFF 0%, #6D4EFF 100%)',
-    'linear-gradient(135deg, #F59E0B 0%, #DC2626 100%)',
-    'linear-gradient(135deg, #14B8A6 0%, #2563EB 100%)',
-    'linear-gradient(135deg, #8B5CF6 0%, #1E3A8A 100%)',
-    'linear-gradient(135deg, #F43F5E 0%, #8B5CF6 100%)',
-  ];
+/** DESIGN.md — badge pastels：按用户 id 稳定取色（头像用） */
+const PASTELS = ['#FB923C', '#EC4899', '#8B5CF6', '#34D399'];
+function pastelFor(seed: string): string {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return grads[h % grads.length];
+  return PASTELS[h % PASTELS.length];
 }

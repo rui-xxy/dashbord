@@ -71,7 +71,7 @@ export function RoleDialog({ user, children }: { user: UserVo; children: ReactNo
           <DialogClose asChild>
             <Button variant="ghost">取消</Button>
           </DialogClose>
-          <Button variant="accent" disabled={role === user.role || mut.isPending} onClick={() => mut.mutate()}>
+          <Button disabled={role === user.role || mut.isPending} onClick={() => mut.mutate()}>
             {mut.isPending ? '保存中…' : '保存'}
           </Button>
         </DialogFooter>

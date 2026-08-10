@@ -4,19 +4,27 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
+/**
+ * DESIGN.md — button-primary：近黑 #111 / 白字 / 40px 高 / 8px 圆角 / Inter 14px 600
+ * 行动层保持单色，不用任何 accent 色。
+ */
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 font-semibold whitespace-nowrap rounded-md transition-colors duration-120 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50 disabled:pointer-events-none',
+  'inline-flex items-center justify-center gap-1.5 font-semibold whitespace-nowrap rounded-md transition-colors duration-120 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/15 disabled:bg-surface-strong disabled:text-muted disabled:pointer-events-none',
   {
     variants: {
       variant: {
-        primary: 'bg-ink text-white hover:bg-ink-soft h-8 px-3.5 text-[13px]',
-        accent: 'bg-accent text-white hover:bg-accent-hover h-8 px-3.5 text-[13px]',
-        secondary: 'bg-surface-card text-ink border border-hairline hover:bg-surface-soft h-8 px-3.5 text-[13px]',
-        ghost: 'text-muted hover:text-ink hover:bg-surface-soft h-8 px-2.5 text-[13px]',
-        outline: 'border border-hairline text-muted hover:text-ink hover:bg-surface-soft h-8 px-2.5 text-[13px]',
-        danger: 'bg-danger text-white hover:bg-danger/90 h-8 px-3.5 text-[13px]',
+        primary: 'bg-ink text-white hover:bg-ink-soft h-10 px-5 text-[14px]',
+        secondary: 'bg-canvas text-ink border border-hairline hover:bg-surface-soft h-10 px-5 text-[14px]',
+        ghost: 'text-muted hover:text-ink hover:bg-surface-soft h-10 px-4 text-[14px]',
+        outline: 'border border-hairline text-muted hover:text-ink hover:bg-surface-soft h-10 px-4 text-[14px]',
+        danger: 'bg-danger text-white hover:bg-danger/90 h-10 px-5 text-[14px]',
       },
-      size: { default: '', icon: 'w-8 h-8 p-0', 'icon-sm': 'w-7 h-7 p-0' },
+      size: {
+        default: '',
+        sm: 'h-8 px-3.5 text-[13px]',
+        icon: 'w-10 h-10 p-0',
+        'icon-sm': 'w-7 h-7 p-0',
+      },
     },
     defaultVariants: { variant: 'primary', size: 'default' },
   },

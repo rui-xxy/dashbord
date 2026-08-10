@@ -5,12 +5,13 @@ import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import { ApiError } from '@/lib/api';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
-  const [phone, setPhone] = useState('18684593792');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,34 +31,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-canvas px-4">
-      {/* 极简品牌背景 */}
-      <div
-        className="absolute inset-0 opacity-[0.025] pointer-events-none"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 20% 30%, #2563EB 0, transparent 40%), radial-gradient(circle at 80% 70%, #6D4EFF 0, transparent 40%)',
-        }}
-      />
-      <div className="relative w-[360px]">
-        {/* 品牌 */}
+    <div className="min-h-screen flex items-center justify-center bg-surface-soft px-4">
+      <div className="relative w-[380px]">
+        {/* 品牌 —— 近黑方块 + Cal Sans 字标 */}
         <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shadow-accent-glow"
-            style={{ background: 'linear-gradient(135deg, #5B8CFF 0%, #6D4EFF 100%)' }}
-          >
+          <div className="w-8 h-8 rounded-md bg-ink flex items-center justify-center">
             <span className="text-white font-display text-[16px]">h</span>
           </div>
           <span className="font-display text-ink text-[20px]">hgbord</span>
         </div>
 
-        <div className="bg-surface-card border border-hairline rounded-xl p-6 shadow-lift">
-          <h1 className="font-display text-ink text-[20px] mb-1" style={{ letterSpacing: '-0.5px' }}>
+        {/* 登录卡 —— 白底 / hairline / 12px 圆角 / 轻投影 */}
+        <div className="bg-surface-panel border border-hairline rounded-lg p-8 shadow-lift">
+          <h1 className="font-display text-ink text-[22px] mb-1" style={{ letterSpacing: '-0.3px' }}>
             欢迎回来
           </h1>
-          <p className="text-[12px] text-muted mb-5">登录到管理后台</p>
+          <p className="text-[13px] text-muted mb-6">登录到管理后台</p>
 
-          <form onSubmit={onSubmit} className="space-y-3.5">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="phone">手机号</Label>
               <Input
@@ -72,29 +63,29 @@ export default function LoginPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">密码</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="请输入密码"
+                autoComplete="current-password"
                 required
               />
             </div>
 
             {error && (
-              <div className="text-[12px] text-danger bg-danger-soft/60 border border-danger/20 rounded-md px-2.5 py-1.5">
+              <div className="text-[13px] text-danger bg-danger-soft/60 border border-danger/20 rounded-md px-3 py-2">
                 {error}
               </div>
             )}
 
-            <Button type="submit" variant="accent" className="w-full h-9" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? '登录中…' : '登录'}
             </Button>
           </form>
         </div>
 
-        <p className="text-center text-[11px] text-muted-soft mt-5">
+        <p className="text-center text-[12px] text-muted-soft mt-6">
           hgbord 管理控制台 · v0.1
         </p>
       </div>

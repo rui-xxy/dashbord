@@ -45,7 +45,7 @@ export function EditUserDialog({ user, children }: { user: UserVo; children: Rea
         <DialogBody>
           <div className="space-y-1.5">
             <Label htmlFor="eu-name">姓名</Label>
-            <Input id="eu-name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input id="eu-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="eu-phone">手机号</Label>
@@ -55,6 +55,7 @@ export function EditUserDialog({ user, children }: { user: UserVo; children: Rea
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
               inputMode="numeric"
+              autoComplete="off"
             />
             {phone.length > 0 && !phoneValid && (
               <div className="text-[11px] text-muted-soft">请输入正确的 11 位手机号</div>
@@ -68,7 +69,7 @@ export function EditUserDialog({ user, children }: { user: UserVo; children: Rea
           <DialogClose asChild>
             <Button variant="ghost">取消</Button>
           </DialogClose>
-          <Button variant="accent" disabled={!phoneValid || mut.isPending} onClick={() => mut.mutate()}>
+          <Button disabled={!phoneValid || mut.isPending} onClick={() => mut.mutate()}>
             {mut.isPending ? '保存中…' : '保存'}
           </Button>
         </DialogFooter>

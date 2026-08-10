@@ -1,33 +1,43 @@
 import Link from 'next/link';
-import { Users } from 'lucide-react';
+import { ArrowRight, FileText, Users } from 'lucide-react';
 
+/**
+ * 仪表盘 —— DESIGN.md feature-card：浅灰卡片（surface-card #F5F5F5）/ 12px 圆角 / 32px 内边距
+ */
 export default function DashboardPage() {
   return (
     <div>
-      <h1 className="font-display text-ink mb-1" style={{ fontSize: 24, letterSpacing: '-0.6px' }}>
+      {/* display-sm: Cal Sans 28px / 600 / -0.5px */}
+      <h1 className="font-display text-ink text-[28px] leading-[1.2] mb-1.5" style={{ letterSpacing: '-0.5px' }}>
         仪表盘
       </h1>
-      <p className="text-[13px] text-muted mb-7">欢迎使用 hgbord 管理后台</p>
+      <p className="text-[14px] text-muted mb-8">欢迎使用 hgbord 管理后台</p>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-6">
+        {/* feature-card（可点击） */}
         <Link
           href="/users"
-          className="bg-surface-card border border-hairline rounded-xl p-5 hover:shadow-lift transition-all duration-200 ease-out-expo group"
+          className="bg-surface-card rounded-lg p-6 transition-shadow duration-200 ease-out-expo hover:shadow-raised group"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-accent-faint flex items-center justify-center">
-              <Users className="w-4 h-4 text-accent" />
-            </div>
-            <div>
-              <div className="text-[14px] font-semibold text-ink">用户管理</div>
-              <div className="text-[12px] text-muted mt-0.5">管理账号、角色与权限</div>
-            </div>
+          <div className="w-10 h-10 rounded-md bg-canvas border border-hairline flex items-center justify-center mb-4">
+            <Users className="w-[18px] h-[18px] text-ink" />
+          </div>
+          <div className="text-[16px] font-semibold text-ink">用户管理</div>
+          <p className="text-[14px] text-muted mt-1 leading-relaxed">管理账号、角色与权限，控制后台访问范围。</p>
+          <div className="flex items-center gap-1 text-[13px] font-medium text-ink mt-4">
+            进入管理
+            <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 ease-out-expo group-hover:translate-x-0.5" />
           </div>
         </Link>
 
-        <div className="bg-surface-card border border-hairline rounded-xl p-5 opacity-70">
-          <div className="text-[14px] font-semibold text-ink">表单管理</div>
-          <div className="text-[12px] text-muted mt-0.5">即将上线</div>
+        {/* feature-card（未上线） */}
+        <div className="bg-surface-card rounded-lg p-6 opacity-60">
+          <div className="w-10 h-10 rounded-md bg-canvas border border-hairline flex items-center justify-center mb-4">
+            <FileText className="w-[18px] h-[18px] text-ink" />
+          </div>
+          <div className="text-[16px] font-semibold text-ink">表单管理</div>
+          <p className="text-[14px] text-muted mt-1 leading-relaxed">创建和管理业务表单。</p>
+          <div className="text-[13px] font-medium text-muted-soft mt-4">即将上线</div>
         </div>
       </div>
     </div>

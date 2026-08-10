@@ -17,8 +17,8 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'anim-dialog fixed left-1/2 top-1/2 z-50 w-[440px]',
-        'bg-surface-card rounded-xl border border-hairline shadow-overlay',
+        'anim-dialog fixed left-1/2 top-1/2 z-50 w-[440px] -translate-x-1/2 -translate-y-1/2',
+        'bg-surface-panel rounded-lg border border-hairline shadow-overlay',
         'focus:outline-none',
         className,
       )}
@@ -38,11 +38,11 @@ export function DialogHeader({ className, ...props }: ComponentPropsWithoutRef<'
 }
 
 export function DialogTitle({ className, ...props }: ComponentPropsWithoutRef<typeof DialogPrimitive.Title>) {
-  return <DialogPrimitive.Title className={cn('text-[15px] font-semibold text-ink', className)} {...props} />;
+  return <DialogPrimitive.Title className={cn('font-display text-[16px] text-ink', className)} {...props} />;
 }
 
 export function DialogDescription({ className, ...props }: ComponentPropsWithoutRef<typeof DialogPrimitive.Description>) {
-  return <DialogPrimitive.Description className={cn('text-[12px] text-muted mt-0.5', className)} {...props} />;
+  return <DialogPrimitive.Description className={cn('text-[13px] text-muted mt-0.5', className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }: ComponentPropsWithoutRef<'div'>) {

@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function CreateUserDialog({ children }: { children: ReactNode }) {
@@ -78,6 +79,7 @@ export function CreateUserDialog({ children }: { children: ReactNode }) {
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
               placeholder="11 位手机号"
               inputMode="numeric"
+              autoComplete="off"
             />
             {phone.length > 0 && !phoneValid && (
               <div className="text-[11px] text-muted-soft">请输入正确的 11 位手机号</div>
@@ -85,11 +87,17 @@ export function CreateUserDialog({ children }: { children: ReactNode }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cu-name">姓名</Label>
-            <Input id="cu-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="如：张三" />
+            <Input id="cu-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="如：张三" autoComplete="off" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cu-pw">初始密码</Label>
-            <Input id="cu-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="至少 6 位" />
+            <PasswordInput
+              id="cu-pw"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="至少 6 位"
+              autoComplete="new-password"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>角色</Label>
@@ -115,7 +123,6 @@ export function CreateUserDialog({ children }: { children: ReactNode }) {
             <Button variant="ghost">取消</Button>
           </DialogClose>
           <Button
-            variant="accent"
             disabled={!phoneValid || !name || password.length < 6 || mut.isPending}
             onClick={() => mut.mutate()}
           >

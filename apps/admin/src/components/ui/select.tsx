@@ -14,12 +14,12 @@ export const SelectTrigger = forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'group flex h-8 w-full items-center justify-between gap-2 px-2.5 text-[13px] text-ink',
-      'bg-surface-card border border-hairline rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.03)]',
+      'group flex h-10 w-full items-center justify-between gap-2 px-3.5 text-[14px] text-ink',
+      'bg-canvas border border-hairline rounded-md shadow-lift',
       'data-[placeholder]:text-muted-soft',
-      'hover:border-surface-active',
-      'focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(37,99,235,0.24)]',
-      'data-[state=open]:border-accent data-[state=open]:shadow-[0_0_0_3px_rgba(37,99,235,0.24)]',
+      'hover:border-surface-strong',
+      'focus:outline-none focus:border-ink focus:shadow-[0_0_0_3px_rgba(17,17,17,0.08)]',
+      'data-[state=open]:border-ink data-[state=open]:shadow-[0_0_0_3px_rgba(17,17,17,0.08)]',
       'transition-all duration-120 ease-out-expo disabled:opacity-50 disabled:pointer-events-none',
       className,
     )}
@@ -27,7 +27,7 @@ export const SelectTrigger = forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="w-3.5 h-3.5 text-muted-soft transition-transform duration-200 ease-out-expo group-data-[state=open]:rotate-180" />
+      <ChevronDown className="w-4 h-4 text-muted-soft transition-transform duration-200 ease-out-expo group-data-[state=open]:rotate-180" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -44,7 +44,7 @@ export const SelectContent = forwardRef<
       sideOffset={sideOffset}
       className={cn(
         'anim-pop relative z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden',
-        'rounded-lg bg-surface-card border border-hairline shadow-overlay',
+        'rounded-lg bg-surface-panel border border-hairline shadow-overlay',
         className,
       )}
       {...props}
@@ -62,7 +62,7 @@ export const SelectItem = forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex h-8 cursor-pointer select-none items-center rounded-sm pl-7 pr-2 text-[13px] text-body',
+      'relative flex h-9 cursor-pointer select-none items-center rounded-sm pl-8 pr-2.5 text-[13px] text-body',
       'transition-colors duration-120 ease-out-expo',
       'data-[highlighted]:bg-surface-soft data-[highlighted]:text-ink data-[highlighted]:outline-none',
       'data-[state=checked]:text-ink data-[state=checked]:font-medium',
@@ -71,9 +71,9 @@ export const SelectItem = forwardRef<
     )}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className="absolute left-2.5 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="w-3.5 h-3.5 text-accent" strokeWidth={2.5} />
+        <Check className="w-3.5 h-3.5 text-ink" strokeWidth={2.5} />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
