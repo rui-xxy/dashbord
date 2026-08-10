@@ -132,11 +132,14 @@ export function DatePicker({ value, onChange, trigger }: DatePickerProps) {
     <div ref={wrapRef} className="relative inline-flex">
       <button
         type="button"
-        onClick={(e) => {
+        // 用 mousedown 而非 click：mousedown 阶段 preventDefault 可阻止
+        // 外层 input 失焦（否则 input onBlur 先触发 → 编辑态卸载 → 日历一起销毁）
+        onMouseDown={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           setOpen((o) => !o);
         }}
-        className="inline-flex"
+        className="inline-flex cursor-pointer"
         title="选择日期"
       >
         {trigger}
@@ -144,7 +147,9 @@ export function DatePicker({ value, onChange, trigger }: DatePickerProps) {
       {open && (
         <div
           className="anim-pop absolute top-full right-0 mt-1 z-50 bg-surface-panel border border-hairline rounded-lg shadow-overlay p-3 w-[260px]"
-          onMouseDown={(e) => e.stopPropagation()}
+          // preventDefault 阻止 focus 转移到日历内的 button，
+          // 从而避免外层 input 失焦卸载（stopPropagation 管不了 focus）
+          onMouseDown={(e) => e.preventDefault()}
         >
           {/* 月份导航 */}
           <div className="flex items-center justify-between mb-2">
