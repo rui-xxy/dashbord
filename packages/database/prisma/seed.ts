@@ -51,9 +51,6 @@ const SULFURIC_SCHEMA = [
   { id: 'meter_6', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
   { id: 'meter_mgso4_phase2', title: '硫酸镁二期电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 120 },
   { id: 'meter_amino', title: '氨基磺酸电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 110 },
-
-  // ── 其他 ──
-  { id: 'parkingRecords', title: '停车情况', type: 'text', group: '其他', width: 200 },
 ];
 
 // ═══════════════════════════════════════════════════════════
