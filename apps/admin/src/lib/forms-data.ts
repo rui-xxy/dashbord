@@ -67,43 +67,41 @@ export interface FormSubmission {
 }
 
 // ═══════════════════════════════════════════════════════════
-// 硫酸车间报表 Schema —— form 6 的真实字段
+// 硫酸车间报表 Schema —— 严格对齐 b2-source form 6 真实字段
+// 数据来源：apps/server/all_forms_debug.json (form id=6)
+// 分页结构：第 1 页"储罐液位"（14 字段）+ 第 2 页"仪表读数"（6 字段）
 // ═══════════════════════════════════════════════════════════
 
 const SULFURIC_SCHEMA: FormSchema = [
-  // 基础
-  { id: 'field_date', title: '日期', type: 'date', group: '基础', width: 110 },
+  // ── 储罐液位（单位 %）──
+  { id: 'field_date', title: '日期', type: 'date', group: '储罐液位', width: 110 },
+  // 98% 酸储罐（标题沿用真实填报用的储罐编号/名称）
+  { id: 'tank_98-1', title: '98%酸 2#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_98-2', title: '98%酸 3#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_98-3', title: '98%酸 4#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_98-4', title: '98%酸 拨酸槽', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 110 },
+  // 发烟酸储罐
+  { id: 'tank_fy-1', title: '发烟酸 1#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_fy-2', title: '发烟酸 5#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_fy-3', title: '烟酸拨酸槽', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 100 },
+  { id: 'tank_fy-4', title: '氨基磺酸转运槽', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 120 },
+  // 试剂酸储罐
+  { id: 'tank_jp-1', title: '试剂酸 1#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_jp-2', title: '试剂酸 2#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_jp-3', title: '试剂酸 3#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  { id: 'tank_jp-4', title: '试剂酸 4#', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 90 },
+  // 93 酸 / 双氧水
+  { id: 'tank_syc-1', title: '双氧水储罐', type: 'number', group: '储罐液位', precision: 1, unit: '%', width: 100 },
 
-  // 98%硫酸储罐液位（%）
-  { id: 'tank_98-1', title: '98%酸 1#罐', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_98-2', title: '98%酸 2#罐', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_98-3', title: '98%酸 3#罐', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_98-4', title: '98%酸 4#罐', type: 'number', group: '98%硫酸', precision: 1, unit: '%', width: 110 },
+  // ── 仪表读数（电表读数，无单位）──
+  { id: 'meter_3', title: '1#电机', type: 'number', group: '仪表读数', precision: 2, width: 90 },
+  { id: 'meter_4', title: '2#电机', type: 'number', group: '仪表读数', precision: 2, width: 90 },
+  { id: 'meter_5', title: '1#电炉', type: 'number', group: '仪表读数', precision: 2, width: 90 },
+  { id: 'meter_6', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, width: 90 },
+  { id: 'meter_mgso4_phase2', title: '硫酸镁二期电表', type: 'number', group: '仪表读数', precision: 2, width: 120 },
+  { id: 'meter_amino', title: '氨基磺酸电表', type: 'number', group: '仪表读数', precision: 2, width: 110 },
 
-  // 发烟硫酸储罐液位（%）
-  { id: 'tank_fy-1', title: '发烟酸 1#罐', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_fy-2', title: '发烟酸 2#罐', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_fy-3', title: '发烟酸 3#罐', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_fy-4', title: '发烟酸 4#罐', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', width: 110 },
-
-  // 试剂酸储罐液位（%）
-  { id: 'tank_jp-1', title: '试剂酸 1#罐', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_jp-2', title: '试剂酸 2#罐', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_jp-3', title: '试剂酸 3#罐', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 110 },
-  { id: 'tank_jp-4', title: '试剂酸 4#罐', type: 'number', group: '试剂酸', precision: 1, unit: '%', width: 110 },
-
-  // 93%硫酸储罐液位（%）
-  { id: 'tank_syc-1', title: '93酸 1#罐', type: 'number', group: '93%硫酸', precision: 1, unit: '%', width: 110 },
-
-  // 流量计读数
-  { id: 'meter_5', title: '5#流量计', type: 'number', group: '流量计', precision: 2, width: 100 },
-  { id: 'meter_6', title: '6#流量计', type: 'number', group: '流量计', precision: 2, width: 100 },
-  { id: 'meter_3', title: '3#流量计', type: 'number', group: '流量计', precision: 2, width: 100 },
-  { id: 'meter_4', title: '4#流量计', type: 'number', group: '流量计', precision: 2, width: 100 },
-  { id: 'meter_mgso4_phase2', title: '硫酸镁二段', type: 'number', group: '流量计', precision: 2, width: 110 },
-  { id: 'meter_amino', title: '氨基流量计', type: 'number', group: '流量计', precision: 2, width: 110 },
-
-  // 停车记录（文本摘要展示）
+  // ── 其他（提交时附加）──
   { id: 'parkingRecords', title: '停车情况', type: 'text', group: '其他', width: 200 },
 ];
 
@@ -115,7 +113,7 @@ export const MOCK_FORMS: FormVo[] = [
   {
     id: 'f_001',
     title: '硫酸车间报表',
-    description: '记录每日各储罐液位、流量计读数及停车情况。',
+    description: '每日生产数据填报（储罐液位 + 仪表读数）',
     schema: SULFURIC_SCHEMA,
     collected: 1284,
     updatedAt: '2026-08-11T08:30:00.000Z',
@@ -172,12 +170,13 @@ function genSulfuricRows(): FormSubmission[] {
         'tank_jp-3': lvl(48, 8),
         'tank_jp-4': lvl(70, 5),
         'tank_syc-1': lvl(78, 6),
-        meter_5: +(1245 + Math.sin(i) * 80 + Math.random() * 20).toFixed(2),
-        meter_6: +(982 + Math.cos(i) * 50 + Math.random() * 15).toFixed(2),
-        meter_3: +(456 + Math.random() * 30).toFixed(2),
-        meter_4: +(312 + Math.random() * 20).toFixed(2),
-        meter_mgso4_phase2: +(28 + Math.random() * 5).toFixed(2),
-        meter_amino: +(15 + Math.random() * 3).toFixed(2),
+        // 仪表读数（电表度数，量级 4 位数）
+        meter_3: +(12480 + Math.sin(i) * 400 + Math.random() * 80).toFixed(2),
+        meter_4: +(9820 + Math.cos(i) * 300 + Math.random() * 60).toFixed(2),
+        meter_5: +(4560 + Math.random() * 120).toFixed(2),
+        meter_6: +(3120 + Math.random() * 90).toFixed(2),
+        meter_mgso4_phase2: +(2840 + Math.random() * 100).toFixed(2),
+        meter_amino: +(1560 + Math.random() * 70).toFixed(2),
         parkingRecords: parkingToText(i === 1 ? [PARKING_SAMPLES[1]] : i === 4 ? [PARKING_SAMPLES[2]] : undefined) as unknown as string,
       },
     });
