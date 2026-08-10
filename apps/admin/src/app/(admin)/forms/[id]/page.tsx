@@ -27,7 +27,7 @@ export default function FormDataPage() {
 
   const { data: subsData } = useQuery({
     queryKey: ['forms', id, 'submissions'],
-    queryFn: () => api.forms.listSubmissions(id, { pageSize: 200 }),
+    queryFn: () => api.forms.listSubmissions(id, { pageSize: 100 }),
     enabled: !!id,
   });
 

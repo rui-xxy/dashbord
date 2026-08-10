@@ -203,10 +203,10 @@ export const BatchUpdateSubmissionsDto = z.object({
 });
 export type BatchUpdateSubmissionsDto = z.infer<typeof BatchUpdateSubmissionsDto>;
 
-// ── Form 分页查询 ──
+// ── Form 分页查询（pageSize 上限放宽到 1000，表单数据常一次性加载）──
 export const FormPaginationQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  pageSize: z.coerce.number().int().min(1).max(1000).default(20),
   search: z.string().optional(),
 });
 export type FormPaginationQuery = z.infer<typeof FormPaginationQuery>;
