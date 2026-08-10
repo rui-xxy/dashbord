@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #FCFCFD;
+  --foreground: #0A0A0B;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures everywhere numbers appear */
+.tnum { font-feature-settings: 'tnum' 1; font-variant-numeric: tabular-nums; }
+
+/* Cal Sans orientation moment (fallback: Inter 600 -0.04em) */
+.font-display { font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.04em; }
+
+/* ═══ Signature: the live wire rail ═══ */
+.nav-rail {
+  position: absolute;
+  left: 0; top: 0;
+  width: 2px; height: 24px;
+  background: #2563EB;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.45);
+  border-radius: 0 2px 2px 0;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+/* ═══ Signature: focus bloom ═══ */
+.bloom:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.24); }
+
+/* ═══ Row hover wash ═══ */
+.row-wash { transition: background-color 120ms cubic-bezier(0.22,1,0.36,1); }
+.row-wash:hover { background-color: #FAFAFA; }
+
+/* ═══ Scrollbar ═══ */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #D4D4D8; border-radius: 8px; border: 3px solid #FCFCFD; }
+::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }

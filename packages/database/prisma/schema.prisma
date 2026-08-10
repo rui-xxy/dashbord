@@ -1,0 +1,38 @@
+// ═══════════════════════════════════════════════════════════
+// hgbord 全局唯一 Prisma schema
+// ═══════════════════════════════════════════════════════════
+// 原型阶段用 SQLite（零配置）。迁移到 PostgreSQL 只需：
+//   1. provider 改成 "postgresql"
+//   2. DATABASE_URL 改成 postgresql 连接串
+//   3. pnpm --filter @hgbord/database prisma migrate reset
+// ═══════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // SQLite: 开发期零配置
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────────────────
+// 用户域
+// ────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(cuid())
+  phone        String     @unique // 手机号（中国大陆 11 位），全局唯一，作为登录账号
+  name         String
+  passwordHash String
+  role         String     @default("STAFF") // 对应 Role 枚举（SQLite 无原生 enum，用 String）
+  status       String     @default("ACTIVE") // 对应 UserStatus 枚举
+  avatarUrl    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([role])
+  @@index([status])
+}
