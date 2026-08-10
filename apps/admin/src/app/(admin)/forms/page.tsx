@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { FileText, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Permission } from '@hgbord/shared';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -18,15 +18,10 @@ export default function FormsPage() {
   return (
     <div>
       {/* 标题 + 操作 —— display-sm: Cal Sans 28px / 600 / -0.5px */}
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <h1 className="font-display text-ink text-[28px] leading-[1.2]" style={{ letterSpacing: '-0.5px' }}>
-            表单管理
-          </h1>
-          <p className="text-[14px] text-muted mt-1.5">
-            共 <span className="tnum text-ink font-medium">{MOCK_FORMS.length}</span> 个表单
-          </p>
-        </div>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="font-display text-ink text-[28px] leading-[1.2]" style={{ letterSpacing: '-0.5px' }}>
+          表单管理
+        </h1>
         {can(Permission.FORM_MANAGE) && (
           <Button>
             <Plus className="w-4 h-4" />
@@ -53,13 +48,6 @@ export default function FormsPage() {
             ))}
           </tbody>
         </table>
-
-        {/* 底部计数条 */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-t border-hairline-soft text-[14px]">
-          <span className="text-muted tnum">
-            共 <span className="text-ink font-medium">{MOCK_FORMS.length}</span> 个表单
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -69,20 +57,8 @@ export default function FormsPage() {
 function FormRow({ form }: { form: FormVo }) {
   return (
     <tr className="row-wash border-t border-hairline-soft h-16">
-      {/* 表单名称 —— 图标 + 标题 + 描述 */}
-      <td className="px-6">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-md bg-surface-soft border border-hairline flex items-center justify-center shrink-0">
-            <FileText className="w-[18px] h-[18px] text-ink" />
-          </div>
-          <div className="min-w-0">
-            <div className="font-semibold text-ink">{form.title}</div>
-            {form.description && (
-              <div className="text-[12px] text-muted-soft truncate">{form.description}</div>
-            )}
-          </div>
-        </div>
-      </td>
+      {/* 表单名称 */}
+      <td className="px-6 font-semibold text-ink">{form.title}</td>
 
       {/* 收集份数 */}
       <td className="px-4 text-right tnum font-medium text-ink">
