@@ -41,6 +41,7 @@ const FROZEN_COLS = 1; // 冻结前 N 列（field_date）
 const ACTION_COL_W = 48; // 删除按钮列宽
 const DEFAULT_COL_W = 100;
 const DATE_COL_W = 128;
+const CELL_SCROLL_GAP = 8; // 活动单元格与可视边界保留一点呼吸空间
 
 /** 父组件传入的提交记录格式（FormSubmissionVo 精简版） */
 interface SubmissionInput {
@@ -126,6 +127,10 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
 
   const groups = useMemo(() => computeGroups(schema), [schema]);
   const columnWidths = useMemo(() => schema.map(getColumnWidth), [schema]);
+  const frozenPaneWidth = useMemo(
+    () => ROW_NO_W + columnWidths.slice(0, FROZEN_COLS).reduce((sum, width) => sum + width, 0),
+    [columnWidths],
+  );
   const tableMinWidth = useMemo(
     () => ROW_NO_W + ACTION_COL_W + columnWidths.reduce((sum, width) => sum + width, 0),
     [columnWidths],
@@ -197,6 +202,34 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
     [rows.length, schema.length],
   );
 
+  const getColumnLeft = useCallback(
+    (colIdx: number) => ROW_NO_W + columnWidths.slice(0, colIdx).reduce((sum, width) => sum + width, 0),
+    [columnWidths],
+  );
+
+  const ensureCellVisible = useCallback(
+    (colIdx: number) => {
+      const scrollEl = scrollRef.current;
+      if (!scrollEl) return;
+
+      const cellLeft = getColumnLeft(colIdx);
+      const cellRight = cellLeft + columnWidths[colIdx];
+      const currentLeft = scrollEl.scrollLeft;
+      const visibleLeft = currentLeft + frozenPaneWidth + CELL_SCROLL_GAP;
+      const visibleRight = currentLeft + scrollEl.clientWidth - ACTION_COL_W - CELL_SCROLL_GAP;
+
+      let nextScrollLeft = currentLeft;
+      if (colIdx >= FROZEN_COLS && cellLeft < visibleLeft) {
+        nextScrollLeft = Math.max(0, cellLeft - frozenPaneWidth - CELL_SCROLL_GAP);
+      } else if (cellRight > visibleRight) {
+        nextScrollLeft = Math.max(0, cellRight - scrollEl.clientWidth + ACTION_COL_W + CELL_SCROLL_GAP);
+      }
+
+      if (nextScrollLeft !== currentLeft) scrollEl.scrollLeft = nextScrollLeft;
+    },
+    [columnWidths, frozenPaneWidth, getColumnLeft],
+  );
+
   // ── 导航：提交 + 跳格（统一设置 suppressBlur 防止 onBlur 二次提交）──
   const navigate = useCallback(
     (dir: 'up' | 'down' | 'left' | 'right') => {
@@ -209,24 +242,24 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
         suppressBlur.current = false;
         return;
       }
+      if (dir === 'left' || dir === 'right') ensureCellVisible(next.col);
       enterEdit(next.row, next.col);
       // 下一 tick 恢复，确保新 input 的 focus 不被旧 input 的 blur 干扰
       queueMicrotask(() => {
         suppressBlur.current = false;
       });
     },
-    [editing, commitDraft, computeNext, enterEdit],
+    [editing, commitDraft, computeNext, ensureCellVisible, enterEdit],
   );
 
-  // ── editing 变化时：focus + select + scrollIntoView（useLayoutEffect 防 paint 闪烁）──
+  // ── editing 变化时：focus + select + 自定义滚动（点击进入时也避开冻结列覆盖）──
   useLayoutEffect(() => {
     if (!editing || !inputRef.current) return;
     const el = inputRef.current;
+    ensureCellVisible(editing.col);
     el.focus();
     if (el instanceof HTMLInputElement) el.select();
-    // 仅在单元格真正离开视口时才滚动（nearest 不打断用户当前滚动位置）
-    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [editing]);
+  }, [editing, ensureCellVisible]);
 
   // ── 键盘处理 ──
   const onKeyDown = useCallback(
@@ -488,7 +521,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                 <td
                   style={{ width: ROW_NO_W, minWidth: ROW_NO_W, maxWidth: ROW_NO_W, left: 0 }}
                   className={cn(
-                    'sticky z-10 text-center text-[12px] text-muted-soft tnum px-2 h-11 border-b border-r border-hairline-soft bg-surface-panel',
+                    'sticky z-30 text-center text-[12px] text-muted-soft tnum px-2 h-11 border-b border-r border-hairline-soft bg-surface-panel',
                     row._state !== 'saved' && 'font-semibold text-warning',
                   )}
                 >
@@ -517,9 +550,9 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                         'transition-colors duration-120 ease-out-expo',
                         !isEditing && 'row-wash',
                         // 冻结列固定白底；其余按所属分组奇偶交替（与表头一致）
-                        isFrozen ? 'sticky z-10 bg-canvas' : groupBg(gIdx),
-                        // 编辑态提升层级避免被表头/相邻列盖住
-                        isEditing && 'z-30',
+                        isFrozen ? 'sticky z-20 bg-canvas' : groupBg(gIdx),
+                        // 编辑态提升到普通单元格之上，但保持在冻结列之下
+                        isEditing && !isFrozen && 'z-10',
                       )}
                       style={{
                         ...(isFrozen ? { left: ROW_NO_W } : {}),
