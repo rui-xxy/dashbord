@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="scroll-smooth">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>hgbord · 仪表盘</title>
+<title>hgbord · 智能业务与控制仪表盘</title>
 
-<!-- Fonts: Inter (workhorse) + JetBrains Mono (code/IDs). Cal Sans fallback → Inter 600 -0.04em -->
+<!-- Fonts: Inter (body/UI) + JetBrains Mono (code/IDs) -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -13,777 +13,1207 @@
 <!-- Tailwind Play CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  // Design tokens injected into Tailwind theme — mirrors docs/design-admin.md YAML
+  // Design tokens injected into Tailwind theme — strictly matching DESIGN.md
   tailwind.config = {
     theme: {
       extend: {
         colors: {
-          // Monochrome floor
-          canvas: '#FCFCFD',
-          ink: '#0A0A0B',
-          'ink-soft': '#27272A',
-          body: '#3F3F46',
-          muted: '#71717A',
-          'muted-soft': '#A1A1AA',
-          'muted-faint': '#D4D4D8',
-          hairline: '#E4E4E7',
-          'hairline-soft': '#F4F4F5',
-          'surface-soft': '#FAFAFA',
-          'surface-panel': '#F4F4F5',
-          'surface-hover': '#E4E4E7',
-          'surface-active': '#D4D4D8',
-          'surface-inset': '#F4F4F5',
-          'surface-card': '#FFFFFF',
-          // Dark frame — purple-tinted ink (Linear-style)
-          'surface-dark': '#13111C',
-          'surface-dark-elev': '#1C1A2A',
-          'surface-dark-hi': '#252236',
-          'on-dark': '#FAFAFA',
-          'on-dark-soft': '#A8A4BC',
-          'on-dark-faint': '#5C5870',
-          'dark-hairline': '#2A2740',
-          'dark-hairline-soft': '#1C1A2A',
-          // Live wire
-          accent: '#2563EB',
-          'accent-hover': '#1D4ED8',
-          'accent-soft': '#DBEAFE',
-          'accent-faint': '#EFF6FF',
-          // Semantic
-          success: '#059669', 'success-soft': '#D1FAE5',
-          warning: '#D97706', 'warning-soft': '#FEF3C7',
-          danger: '#DC2626',  'danger-soft': '#FEE2E2',
-          // Viz
-          'viz-1': '#1E3A8A', 'viz-2': '#2563EB', 'viz-3': '#60A5FA',
-          'viz-4': '#93C5FD', 'viz-5': '#DBEAFE', 'viz-n': '#A1A1AA',
+          primary: '#111111',
+          'primary-active': '#242424',
+          'primary-disabled': '#e5e7eb',
+          ink: '#111111',
+          body: '#374151',
+          muted: '#6b7280',
+          'muted-soft': '#898989',
+          hairline: '#e5e7eb',
+          'hairline-soft': '#f3f4f6',
+          canvas: '#ffffff',
+          'surface-soft': '#f8f9fa',
+          'surface-card': '#f5f5f5',
+          'surface-strong': '#e5e7eb',
+          'surface-dark': '#101010',
+          'surface-dark-elevated': '#1a1a1a',
+          'on-primary': '#ffffff',
+          'on-dark': '#ffffff',
+          'on-dark-soft': '#a1a1aa',
+          'brand-accent': '#3b82f6',
+          success: '#10b981',
+          warning: '#f59e0b',
+          error: '#ef4444',
+          'badge-orange': '#fb923c',
+          'badge-pink': '#ec4899',
+          'badge-violet': '#8b5cf6',
+          'badge-emerald': '#34d399',
         },
         fontFamily: {
           sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-          display: ['"Cal Sans"', 'Inter', 'sans-serif'],
-          mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          display: ['Cal Sans', 'Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
         },
-        fontSize: {
-          'micro': ['10px', { lineHeight: '1.2', letterSpacing: '0.05em', fontWeight: '600' }],
+        borderRadius: {
+          xs: '4px',
+          sm: '6px',
+          md: '8px',
+          lg: '12px',
+          xl: '16px',
+          pill: '9999px',
+          full: '9999px',
         },
-        borderRadius: { xs: '4px', sm: '6px', md: '8px', lg: '10px', xl: '12px', '2xl': '14px' },
         boxShadow: {
-          'lift': '0 1px 2px rgba(0,0,0,0.04)',
-          'raised': '0 4px 12px rgba(0,0,0,0.08)',
-          'overlay': '0 20px 50px -10px rgba(0,0,0,0.25), 0 8px 20px -8px rgba(0,0,0,0.1)',
-          'accent-glow': '0 0 12px rgba(37, 99, 235, 0.24)',
+          'subtle': '0 1px 2px rgba(0, 0, 0, 0.05)',
+          'elevated': '0 4px 12px rgba(0, 0, 0, 0.08)',
+          'modal': '0 20px 50px -10px rgba(0, 0, 0, 0.25)',
+          'pill-active': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
         },
-        transitionTimingFunction: { 'out-expo': 'cubic-bezier(0.22, 1, 0.36, 1)' },
-        transitionDuration: { '120': '120ms', '200': '200ms', '320': '320ms' },
+        transitionTimingFunction: {
+          'out-expo': 'cubic-bezier(0.22, 1, 0.36, 1)',
+        }
       }
     }
   }
 </script>
 
 <style>
-  /* ===== Global typography defaults ===== */
-  html { font-family: 'Inter', sans-serif; font-size: 13px; }
-  body { background: #FCFCFD; color: #0A0A0B; -webkit-font-smoothing: antialiased; }
-  /* Tabular figures everywhere numbers appear */
+  /* Global typography & base styling matching Cal.com DESIGN.md */
+  html { font-family: 'Inter', sans-serif; font-size: 14px; background-color: #ffffff; color: #111111; -webkit-font-smoothing: antialiased; }
+  body { background-color: #ffffff; color: #111111; }
   .tnum { font-feature-settings: 'tnum' 1; font-variant-numeric: tabular-nums; }
-  /* Cal Sans orientation moment (fallback: Inter 600 -0.04em) */
+  
+  /* Cal Sans display fallback style (weight 600 with negative tracking -0.04em) */
   .font-display { font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: -0.04em; }
 
-  /* ===== Sidebar — same family as the canvas, one continuous desk =====
-     Slightly recessed from the canvas (#F8F8FA vs #FCFCFD) so it reads as
-     a region, not a separate panel. No hard contrast, no texture — just tone. */
-  #sidebar {
-    background-color: #F8F8FA;
-    border-right: 1px solid #ECECEF;
+  /* Interactive Smooth Pill Switcher Indicator */
+  .pill-glider {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    border-radius: 9999px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), width 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 0;
   }
 
-  /* ===== Signature: the live wire rail glide =====
-     A single 2px accent rail that glides between active sidebar items. */
-  #navRail {
-    position: absolute; left: 0; top: 0;
-    width: 2px; height: 24px;
-    background: #2563EB;
-    box-shadow: 0 0 8px rgba(37, 99, 235, 0.45);
-    border-radius: 0 2px 2px 0;
-    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
-    pointer-events: none;
+  /* Focus rings matching monochrome design */
+  .focus-ring:focus { outline: none; border-color: #111111; box-shadow: 0 0 0 2px rgba(17,17,17,0.15); }
+
+  /* Animations */
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
+  .animate-modal { animation: modalIn 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-  /* ===== Signature: focus bloom on inputs ===== */
-  .bloom:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.24); }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-toast { animation: toastIn 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-  /* ===== Row hover wash ===== */
-  .row-wash { transition: background-color 120ms cubic-bezier(0.22,1,0.36,1); }
-  .row-wash:hover { background-color: #FAFAFA; }
-
-  /* ===== Card hover lift ===== */
-  .card-lift { transition: transform 200ms cubic-bezier(0.22,1,0.36,1), box-shadow 200ms cubic-bezier(0.22,1,0.36,1); }
-  .card-lift:hover { transform: translateY(-1px); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-
-  /* ===== Scrollbar — minimal ===== */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: #D4D4D8; border-radius: 8px; border: 3px solid #FCFCFD; }
-  ::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
-
-  /* ===== Command palette entrance ===== */
-  .cmd-enter { animation: cmdIn 200ms cubic-bezier(0.22,1,0.36,1); }
-  @keyframes cmdIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
-  .overlay-fade { animation: fadeIn 150ms ease-out; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-  /* ===== Sparkline / chart polylines ===== */
-  .area-fill { fill: url(#areaGrad); }
+  /* Custom scrollbars */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
   [hidden] { display: none !important; }
-
-  /* Custom select arrow */
-  select.tiny { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2371717A' d='M5 6.5L1.5 3h7z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; -webkit-appearance: none; appearance: none; padding-right: 24px; }
 </style>
 </head>
 
-<body class="h-screen overflow-hidden">
+<body class="min-h-screen flex flex-col justify-between selection:bg-ink selection:text-white">
 
-<!-- ═══════════════════════════════════════════════════════════════
-     APP SHELL — three-zone frame: dark sidebar + topbar + canvas
-     ═══════════════════════════════════════════════════════════════ -->
-<div class="flex h-full">
+  <!-- ═══════════════════════════════════════════════════════════════
+       1. TOP NAVIGATION BAR (Cal.com top-nav design spec)
+       64px height, white canvas, brand logo, nav-pill-group, CTAs
+       ═══════════════════════════════════════════════════════════════ -->
+  <header class="h-16 bg-canvas border-b border-hairline sticky top-0 z-40 px-6 flex items-center justify-between">
+    <!-- Left: Brand Logo & Title -->
+    <div class="flex items-center gap-6">
+      <a href="#" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-md bg-primary text-white flex items-center justify-center font-display text-base font-semibold transition-transform group-hover:scale-105">
+          h
+        </div>
+        <div class="flex items-baseline gap-1.5">
+          <span class="font-display text-lg text-ink">hgbord</span>
+          <span class="text-[11px] font-semibold text-muted bg-surface-soft border border-hairline px-1.5 py-0.5 rounded-pill">v0.1</span>
+        </div>
+      </a>
 
-  <!-- ─────────────── SIDEBAR (the dark frame, holds the live wire) ─────────────── -->
-  <aside class="w-[240px] shrink-0 bg-surface-dark flex flex-col" id="sidebar">
-    <!-- Brand mark -->
-    <div class="h-14 flex items-center gap-2.5 px-4 border-b border-[#ECECEF]">
-      <div class="w-6 h-6 rounded-md flex items-center justify-center shadow-accent-glow" style="background: linear-gradient(135deg, #5B8CFF 0%, #6D4EFF 100%);">
-        <span class="text-white font-display text-[13px]">h</span>
-      </div>
-      <span class="font-display text-ink text-[15px]">hgbord</span>
-      <span class="ml-auto text-[10px] text-muted-soft tracking-wider font-semibold uppercase">v0.1</span>
+      <!-- Divider -->
+      <div class="h-4 w-px bg-hairline hidden md:block"></div>
+
+      <!-- Nav Pill Group (Cal.com signature interactive sub-nav switcher) -->
+      <nav class="hidden md:flex items-center bg-surface-soft p-1 rounded-pill relative border border-hairline-soft" id="topNavPillGroup">
+        <div class="pill-glider" id="navGlider"></div>
+        <button onclick="switchTab('dashboard', this)" class="nav-tab relative z-10 px-4 py-1.5 text-sm font-medium text-ink transition-colors rounded-pill">
+          仪表盘
+        </button>
+        <button onclick="switchTab('appointments', this)" class="nav-tab relative z-10 px-4 py-1.5 text-sm font-medium text-muted hover:text-ink transition-colors rounded-pill">
+          预约中心
+        </button>
+        <button onclick="switchTab('customers', this)" class="nav-tab relative z-10 px-4 py-1.5 text-sm font-medium text-muted hover:text-ink transition-colors rounded-pill">
+          客户管理
+        </button>
+        <button onclick="switchTab('analytics', this)" class="nav-tab relative z-10 px-4 py-1.5 text-sm font-medium text-muted hover:text-ink transition-colors rounded-pill">
+          分析统计
+        </button>
+        <button onclick="switchTab('settings', this)" class="nav-tab relative z-10 px-4 py-1.5 text-sm font-medium text-muted hover:text-ink transition-colors rounded-pill">
+          系统设置
+        </button>
+      </nav>
     </div>
 
-    <!-- Nav groups (the live wire lives here) -->
-    <nav class="flex-1 overflow-y-auto py-3 relative" id="navList">
-      <div id="navRail"></div>
+    <!-- Right: Global Actions & User Menu -->
+    <div class="flex items-center gap-3">
+      <!-- Search Trigger (⌘K) -->
+      <button onclick="openCmd()" class="flex items-center gap-2 h-9 px-3 bg-surface-soft hover:bg-surface-card border border-hairline rounded-md text-xs text-muted hover:text-ink transition-all">
+        <svg class="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <span class="hidden sm:inline">全局搜索或快捷命令...</span>
+        <kbd class="font-mono text-[10px] text-muted bg-canvas border border-hairline px-1.5 py-0.5 rounded-xs">⌘K</kbd>
+      </button>
 
-      <!-- Section: 概览 -->
-      <div class="text-micro text-muted px-4 mt-3 mb-1.5">概览</div>
-      <a href="#" data-nav data-rail="0" class="nav-item flex items-center gap-2.5 h-8 px-3 mx-2 rounded-sm text-[13px]">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="3" rx="1"/><rect x="9" y="7" width="5" height="7" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/></svg>
-        <span>仪表盘</span>
-      </a>
-      <a href="#" data-nav data-rail="1" class="nav-item flex items-center gap-2.5 h-8 px-3 mx-2 rounded-sm text-[13px] text-body hover:text-ink hover:bg-[#EDEDF0] transition-colors duration-120 ease-out-expo">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 14L5 8l3 3 4-6 3 4"/></svg>
-        <span>分析</span>
-        <span class="ml-auto text-[10px] text-muted tnum">12</span>
-      </a>
+      <!-- Notification Indicator -->
+      <button onclick="showToast('无新通知')" class="w-9 h-9 flex items-center justify-center rounded-md border border-hairline text-ink hover:bg-surface-soft transition-colors relative">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span class="absolute top-2 right-2 w-2 h-2 bg-badge-orange rounded-full"></span>
+      </button>
 
-      <!-- Section: 业务 -->
-      <div class="text-micro text-muted px-4 mt-5 mb-1.5">业务</div>
-      <a href="#" data-nav data-rail="2" class="nav-item flex items-center gap-2.5 h-8 px-3 mx-2 rounded-sm text-[13px] text-body hover:text-ink hover:bg-[#EDEDF0] transition-colors duration-120 ease-out-expo">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="2.5"/><path d="M2.5 14c.5-2.8 2.8-4.5 5.5-4.5s5 1.7 5.5 4.5"/></svg>
-        <span>客户</span>
-      </a>
-      <a href="#" data-nav data-rail="3" class="nav-item flex items-center gap-2.5 h-8 px-3 mx-2 rounded-sm text-[13px] text-body hover:text-ink hover:bg-[#EDEDF0] transition-colors duration-120 ease-out-expo">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h8"/></svg>
-        <span>订单</span>
-        <span class="ml-auto bg-accent text-white text-[10px] font-semibold px-1.5 rounded-xs tnum">3</span>
-      </a>
-      <a href="#" data-nav data-rail="4" class="nav-item flex items-center gap-2.5 h-8 px-3 mx-2 rounded-sm text-[13px] text-body hover:text-ink hover:bg-[#EDEDF0] transition-colors duration-120 ease-out-expo">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M2 6h12M6 2v12"/></svg>
-        <span>内容</span>
-      </a>
-      <a href="#" data-nav data-rail="5" class="nav-item flex items-center gap-2.5 h-8 px-3 mx-2 rounded-sm text-[13px] text-body hover:text-ink hover:bg-[#EDEDF0] transition-colors duration-120 ease-out-expo">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 2"/></svg>
-        <span>审计日志</span>
-      </a>
+      <!-- Primary Action CTA (Cal.com monochrome black button #111111) -->
+      <button onclick="openModal()" class="h-9 px-4 bg-primary text-on-primary hover:bg-primary-active rounded-md font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-subtle active:scale-95">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <span>新建订单 / 预约</span>
+      </button>
 
-      <!-- Section: 系统 -->
-      <div class="text-micro text-muted px-4 mt-5 mb-1.5">系统</div>
-      <a href="#" data-nav data-rail="6" class="nav-item flex items-center gap-2.5 h-8 px-3 mx-2 rounded-sm text-[13px] text-body hover:text-ink hover:bg-[#EDEDF0] transition-colors duration-120 ease-out-expo">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/></svg>
-        <span>设置</span>
-      </a>
-    </nav>
-
-    <!-- User / exit controls -->
-    <div class="p-2 border-t border-[#ECECEF]">
-      <div class="flex items-center gap-2.5 px-2 py-1.5 rounded-sm hover:bg-[#EDEDF0] transition-colors duration-120 ease-out-expo cursor-pointer">
-        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-warning to-danger flex items-center justify-center text-white text-[11px] font-semibold shrink-0">AL</div>
-        <div class="min-w-0 flex-1">
-          <div class="text-[12px] text-ink font-semibold truncate">Ada Lovelace</div>
-          <div class="text-[11px] text-muted truncate">ada@hgbord.com</div>
-        </div>
-        <svg class="w-3.5 h-3.5 text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+      <!-- User Avatar -->
+      <div class="pl-1 border-l border-hairline ml-1">
+        <button onclick="showToast('当前用户: Ada Lovelace (ada@hgbord.com)')" class="w-9 h-9 rounded-full bg-badge-violet text-white font-semibold text-xs flex items-center justify-center hover:opacity-90 transition-opacity ring-2 ring-hairline">
+          AL
+        </button>
       </div>
     </div>
-  </aside>
+  </header>
 
-  <!-- ─────────────── MAIN: topbar + canvas ─────────────── -->
-  <div class="flex-1 flex flex-col min-w-0">
 
-    <!-- ───── TOPBAR (slim orientation bar, 56px) ───── -->
-    <header class="h-14 bg-canvas border-b border-hairline flex items-center gap-3 px-6 shrink-0">
-      <!-- Breadcrumb -->
-      <div class="flex items-center gap-2 text-[13px]">
-        <span class="text-muted">概览</span>
-        <svg class="w-3 h-3 text-muted-faint" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
-        <span class="text-ink font-medium">仪表盘</span>
+  <!-- ═══════════════════════════════════════════════════════════════
+       2. MAIN CONTENT AREA (White Canvas with generous rhythm)
+       ═══════════════════════════════════════════════════════════════ -->
+  <main class="flex-1 max-w-[1280px] w-full mx-auto px-6 py-8 space-y-8">
+
+    <!-- TAB 1: 仪表盘 (Dashboard Home) -->
+    <div id="tab-dashboard" class="tab-page space-y-8">
+      
+      <!-- HERO BAND: Headline + Date Range Filter + Quick Stats -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-hairline-soft">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-semibold text-muted mb-2">
+            <span class="w-2 h-2 rounded-full bg-success"></span>
+            <span>系统正常运行 · 实时同步中</span>
+          </div>
+          <h1 class="font-display text-3xl md:text-4xl text-ink tracking-tight">
+            智能业务与控制仪表盘
+          </h1>
+          <p class="text-muted text-sm mt-1.5 max-w-2xl">
+            欢迎回来，Ada。这里是您今日的业务指标、实时数据分析以及客户预约排程概览。
+          </p>
+        </div>
+
+        <!-- Secondary Filter Pill Group -->
+        <div class="flex items-center gap-2 self-start md:self-auto">
+          <div class="bg-surface-soft p-1 rounded-md border border-hairline flex items-center text-xs font-medium text-muted">
+            <button onclick="setGlobalTime('7d', this)" class="time-btn px-3 py-1 rounded-sm text-ink bg-canvas shadow-subtle font-semibold">7天</button>
+            <button onclick="setGlobalTime('30d', this)" class="time-btn px-3 py-1 rounded-sm hover:text-ink">30天</button>
+            <button onclick="setGlobalTime('12m', this)" class="time-btn px-3 py-1 rounded-sm hover:text-ink">12个月</button>
+          </div>
+          <button onclick="refreshData()" class="h-8 px-3 border border-hairline hover:bg-surface-soft rounded-md text-xs font-semibold text-ink transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>刷新</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Global search trigger (⌘K) -->
-      <button onclick="openCmd()" class="ml-auto flex items-center gap-2 h-8 pl-3 pr-2 bg-surface-soft hover:bg-surface-panel border border-transparent rounded-md text-[12px] text-muted-soft transition-colors duration-120 ease-out-expo">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
-        <span>搜索…</span>
-        <kbd class="font-mono text-[10px] text-muted-faint bg-surface-card border border-hairline rounded-xs px-1.5 py-0.5">⌘K</kbd>
-      </button>
+      <!-- METRIC CARDS (4-Up Grid - Light Gray Cards #f5f5f5 with rounded-lg 12px) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Metric 1: Monthly Recurring Revenue -->
+        <div class="bg-surface-card border border-hairline rounded-lg p-5 hover:border-muted transition-all cursor-pointer group" onclick="showToast('查看 MRR 详情')">
+          <div class="flex items-center justify-between text-muted text-xs font-medium mb-3">
+            <span>月经常收入 (MRR)</span>
+            <span class="px-2 py-0.5 rounded-pill bg-canvas text-ink border border-hairline font-mono text-[11px]">¥</span>
+          </div>
+          <div class="font-display text-3xl text-ink tnum mb-2 group-hover:translate-x-0.5 transition-transform" id="metric-mrr">
+            ¥48,210
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="inline-flex items-center gap-1 text-success font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              +12.4%
+            </span>
+            <span class="text-muted-soft">较上月增长</span>
+          </div>
+          <!-- Sparkline Chart -->
+          <svg class="w-full mt-4 h-8" viewBox="0 0 120 30" fill="none">
+            <path d="M0 25 L20 22 L40 24 L60 15 L80 18 L100 8 L120 5" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M0 25 L20 22 L40 24 L60 15 L80 18 L100 8 L120 5 L120 30 L0 30 Z" fill="url(#sparkGrad1)" opacity="0.1"/>
+            <defs>
+              <linearGradient id="sparkGrad1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#111111"/>
+                <stop offset="100%" stop-color="#111111" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
 
-      <!-- Notifications -->
-      <button class="relative w-8 h-8 flex items-center justify-center rounded-md text-muted hover:bg-surface-soft hover:text-ink transition-colors duration-120 ease-out-expo">
-        <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6.5a5 5 0 0110 0c0 3.5 1 4.5 1 4.5H2s1-1 1-4.5z"/><path d="M6.5 13a1.5 1.5 0 003 0"/></svg>
-        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-accent rounded-full shadow-accent-glow"></span>
-      </button>
+        <!-- Metric 2: Active Users -->
+        <div class="bg-surface-card border border-hairline rounded-lg p-5 hover:border-muted transition-all cursor-pointer group" onclick="showToast('查看活跃用户列表')">
+          <div class="flex items-center justify-between text-muted text-xs font-medium mb-3">
+            <span>活跃用户数</span>
+            <span class="px-2 py-0.5 rounded-pill bg-success/10 text-success font-semibold text-[11px] flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-success"></span> 实时
+            </span>
+          </div>
+          <div class="font-display text-3xl text-ink tnum mb-2 group-hover:translate-x-0.5 transition-transform" id="metric-users">
+            1,204
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="inline-flex items-center gap-1 text-success font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              +8.2%
+            </span>
+            <span class="text-muted-soft">/ 总量 2,418</span>
+          </div>
+          <svg class="w-full mt-4 h-8" viewBox="0 0 120 30" fill="none">
+            <path d="M0 20 L20 18 L40 22 L60 12 L80 14 L100 6 L120 10" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
 
-      <div class="w-px h-5 bg-hairline"></div>
+        <!-- Metric 3: Churn Rate -->
+        <div class="bg-surface-card border border-hairline rounded-lg p-5 hover:border-muted transition-all cursor-pointer group" onclick="showToast('流失率预警报告')">
+          <div class="flex items-center justify-between text-muted text-xs font-medium mb-3">
+            <span>月流失率</span>
+            <span class="px-2 py-0.5 rounded-pill bg-error/10 text-error font-semibold text-[11px]">需关注</span>
+          </div>
+          <div class="font-display text-3xl text-ink tnum mb-2 group-hover:translate-x-0.5 transition-transform" id="metric-churn">
+            2.1%
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="inline-flex items-center gap-1 text-error font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+              +0.4%
+            </span>
+            <span class="text-muted-soft">低于行业预警线</span>
+          </div>
+          <svg class="w-full mt-4 h-8" viewBox="0 0 120 30" fill="none">
+            <path d="M0 10 L20 12 L40 8 L60 16 L80 15 L100 22 L120 25" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
 
-      <!-- Density segmented (demo) -->
-      <div class="flex items-center gap-0.5 bg-surface-panel rounded-md p-0.5">
-        <button class="px-2 h-6 text-[11px] font-semibold text-muted rounded-sm hover:text-ink transition-colors">紧凑</button>
-        <button class="px-2 h-6 text-[11px] font-semibold text-ink bg-surface-card rounded-sm shadow-lift">舒适</button>
-        <button class="px-2 h-6 text-[11px] font-semibold text-muted rounded-sm hover:text-ink transition-colors">宽松</button>
+        <!-- Metric 4: New Signups -->
+        <div class="bg-surface-card border border-hairline rounded-lg p-5 hover:border-muted transition-all cursor-pointer group" onclick="showToast('查看今日新增注册')">
+          <div class="flex items-center justify-between text-muted text-xs font-medium mb-3">
+            <span>今日新增订单/注册</span>
+            <span class="px-2 py-0.5 rounded-pill bg-canvas text-ink border border-hairline font-semibold text-[11px]">今日</span>
+          </div>
+          <div class="font-display text-3xl text-ink tnum mb-2 group-hover:translate-x-0.5 transition-transform" id="metric-signups">
+            +38
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="inline-flex items-center gap-1 text-success font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+              +15.1%
+            </span>
+            <span class="text-muted-soft">较昨日目标超额</span>
+          </div>
+          <!-- Mini Bar Graph -->
+          <div class="flex items-end gap-1 mt-4 h-8">
+            <div class="flex-1 bg-ink/20 rounded-xs h-3"></div>
+            <div class="flex-1 bg-ink/20 rounded-xs h-5"></div>
+            <div class="flex-1 bg-ink/20 rounded-xs h-4"></div>
+            <div class="flex-1 bg-ink/20 rounded-xs h-6"></div>
+            <div class="flex-1 bg-ink/20 rounded-xs h-5"></div>
+            <div class="flex-1 bg-ink/20 rounded-xs h-7"></div>
+            <div class="flex-1 bg-primary rounded-xs h-8"></div>
+          </div>
+        </div>
+
       </div>
-    </header>
 
-    <!-- ───── CANVAS (the recessed worktop) ───── -->
-    <main class="flex-1 overflow-y-auto">
-      <div class="max-w-[1440px] mx-auto px-8 py-7">
 
-        <!-- Page title (the one Cal Sans moment) + actions -->
-        <div class="flex items-end justify-between mb-7">
-          <div>
-            <h1 class="font-display text-ink" style="font-size:24px;line-height:1.2;letter-spacing:-0.6px;">仪表盘</h1>
-            <p class="text-[13px] text-muted mt-1">欢迎回来，Ada。这是你的业务概览。</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <!-- Ghost / icon buttons -->
-            <button class="button-ghost h-8 px-2.5 text-[13px] font-semibold text-muted hover:text-ink hover:bg-surface-soft rounded-md transition-colors duration-120 ease-out-expo flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 0111-3.5M14 8a6 6 0 01-11 3.5M13 2v3h-3M3 14v-3h3"/></svg>
-              刷新
-            </button>
-            <!-- Secondary button -->
-            <button class="button-secondary h-8 px-3.5 text-[13px] font-semibold text-ink bg-surface-card border border-hairline hover:bg-surface-soft rounded-md transition-colors duration-120 ease-out-expo flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12M4 8h8M6 13h4"/></svg>
-              筛选
-            </button>
-            <!-- Accent button: the lone colored CTA (single most important action) -->
-            <button class="button-accent h-8 px-3.5 text-[13px] font-semibold text-white bg-accent hover:bg-accent-hover rounded-md transition-colors duration-120 ease-out-expo flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
-              新建订单
-            </button>
-          </div>
-        </div>
-
-        <!-- ═══ METRIC CARDS — 4-up, the signature "instrument" moment ═══ -->
-        <div class="grid grid-cols-4 gap-4 mb-5">
-          <!-- Metric 1: MRR -->
-          <div class="metric-card bg-surface-card border border-hairline rounded-xl p-4 card-lift cursor-pointer">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-medium text-muted tracking-wide">月经常收入 · MRR</span>
-              <svg class="w-3.5 h-3.5 text-muted-faint" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5L10 10"/></svg>
-            </div>
-            <div class="flex items-baseline gap-2 mb-1">
-              <span class="tnum text-ink" style="font-size:28px;font-weight:600;line-height:1.1;letter-spacing:-0.6px;">¥48,210</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-[11px]">
-              <span class="text-success font-medium tnum flex items-center gap-0.5"><svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2l3 4H2z"/></svg>12.4%</span>
-              <span class="text-muted-soft">较上月</span>
-            </div>
-            <!-- Sparkline -->
-            <svg class="w-full mt-3" height="32" viewBox="0 0 100 32" preserveAspectRatio="none">
-              <polyline points="0,24 12,22 24,20 36,21 48,16 60,14 72,10 84,8 100,4" fill="none" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="100" cy="4" r="2" fill="#2563EB"/>
-            </svg>
-          </div>
-
-          <!-- Metric 2: Active users -->
-          <div class="metric-card bg-surface-card border border-hairline rounded-xl p-4 card-lift cursor-pointer">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-medium text-muted tracking-wide">活跃用户</span>
-              <span class="inline-flex items-center gap-1 text-[10px] text-success font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_0_3px_#D1FAE5]"></span>实时</span>
-            </div>
-            <div class="flex items-baseline gap-2 mb-1">
-              <span class="tnum text-ink" style="font-size:28px;font-weight:600;line-height:1.1;letter-spacing:-0.6px;">1,204</span>
-              <span class="text-[12px] text-muted tnum">/ 2,418</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-[11px]">
-              <span class="text-success font-medium tnum flex items-center gap-0.5"><svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2l3 4H2z"/></svg>8.2%</span>
-              <span class="text-muted-soft">较上周</span>
-            </div>
-            <svg class="w-full mt-3" height="32" viewBox="0 0 100 32" preserveAspectRatio="none">
-              <polyline points="0,18 12,20 24,15 36,17 48,14 60,16 72,12 84,13 100,9" fill="none" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="100" cy="9" r="2" fill="#2563EB"/>
-            </svg>
-          </div>
-
-          <!-- Metric 3: Churn (negative — danger) -->
-          <div class="metric-card bg-surface-card border border-hairline rounded-xl p-4 card-lift cursor-pointer">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-medium text-muted tracking-wide">流失率</span>
-              <svg class="w-3.5 h-3.5 text-muted-faint" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v6M8 12v2"/><circle cx="8" cy="9" r="0.5" fill="currentColor"/></svg>
-            </div>
-            <div class="flex items-baseline gap-2 mb-1">
-              <span class="tnum text-ink" style="font-size:28px;font-weight:600;line-height:1.1;letter-spacing:-0.6px;">2.1%</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-[11px]">
-              <span class="text-danger font-medium tnum flex items-center gap-0.5"><svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor"><path d="M5 8L2 4h6z"/></svg>0.4%</span>
-              <span class="text-muted-soft">需关注</span>
-            </div>
-            <svg class="w-full mt-3" height="32" viewBox="0 0 100 32" preserveAspectRatio="none">
-              <polyline points="0,8 12,10 24,9 36,12 48,14 60,13 72,18 84,16 100,20" fill="none" stroke="#DC2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="100" cy="20" r="2" fill="#DC2626"/>
-            </svg>
-          </div>
-
-          <!-- Metric 4: New signups -->
-          <div class="metric-card bg-surface-card border border-hairline rounded-xl p-4 card-lift cursor-pointer">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-medium text-muted tracking-wide">新增注册</span>
-              <span class="text-[10px] text-muted-soft">今日</span>
-            </div>
-            <div class="flex items-baseline gap-2 mb-1">
-              <span class="tnum text-ink" style="font-size:28px;font-weight:600;line-height:1.1;letter-spacing:-0.6px;">+38</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-[11px]">
-              <span class="text-success font-medium tnum flex items-center gap-0.5"><svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2l3 4H2z"/></svg>15.1%</span>
-              <span class="text-muted-soft">较昨日</span>
-            </div>
-            <!-- Mini bar chart instead of line -->
-            <div class="flex items-end gap-1 mt-3 h-8">
-              <div class="flex-1 bg-viz-4 rounded-xs" style="height:30%"></div>
-              <div class="flex-1 bg-viz-4 rounded-xs" style="height:55%"></div>
-              <div class="flex-1 bg-viz-4 rounded-xs" style="height:40%"></div>
-              <div class="flex-1 bg-viz-4 rounded-xs" style="height:70%"></div>
-              <div class="flex-1 bg-viz-4 rounded-xs" style="height:50%"></div>
-              <div class="flex-1 bg-viz-4 rounded-xs" style="height:80%"></div>
-              <div class="flex-1 bg-viz-3 rounded-xs" style="height:95%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ═══ CHARTS ROW — area chart (2/3) + breakdown (1/3) ═══ -->
-        <div class="grid grid-cols-3 gap-4 mb-5">
-          <!-- Area chart -->
-          <div class="col-span-2 bg-surface-card border border-hairline rounded-xl">
-            <div class="flex items-center justify-between px-5 py-4 border-b border-hairline-soft">
-              <div>
-                <h2 class="text-[15px] font-semibold text-ink" style="letter-spacing:-0.1px;">收入趋势</h2>
-                <p class="text-[12px] text-muted mt-0.5">最近 12 个月</p>
-              </div>
-              <!-- Segmented control -->
-              <div class="flex items-center gap-0.5 bg-surface-panel rounded-md p-0.5">
-                <button class="px-2.5 h-[26px] text-[12px] font-semibold text-muted rounded-sm hover:text-ink">7天</button>
-                <button class="px-2.5 h-[26px] text-[12px] font-semibold text-ink bg-surface-card rounded-sm shadow-lift">30天</button>
-                <button class="px-2.5 h-[26px] text-[12px] font-semibold text-muted rounded-sm hover:text-ink">12月</button>
-              </div>
-            </div>
-            <div class="p-5">
-              <!-- SVG area chart -->
-              <svg class="w-full" height="200" viewBox="0 0 600 200" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#2563EB" stop-opacity="0.18"/>
-                    <stop offset="100%" stop-color="#2563EB" stop-opacity="0"/>
-                  </linearGradient>
-                </defs>
-                <!-- gridlines -->
-                <line x1="0" y1="50" x2="600" y2="50" stroke="#F4F4F5" stroke-width="1"/>
-                <line x1="0" y1="100" x2="600" y2="100" stroke="#F4F4F5" stroke-width="1"/>
-                <line x1="0" y1="150" x2="600" y2="150" stroke="#F4F4F5" stroke-width="1"/>
-                <!-- area -->
-                <path d="M0,160 L50,140 L100,150 L150,110 L200,120 L250,90 L300,95 L350,70 L400,80 L450,55 L500,45 L550,30 L600,20 L600,200 L0,200 Z" class="area-fill"/>
-                <!-- line -->
-                <path d="M0,160 L50,140 L100,150 L150,110 L200,120 L250,90 L300,95 L350,70 L400,80 L450,55 L500,45 L550,30 L600,20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <!-- last point -->
-                <circle cx="600" cy="20" r="3.5" fill="#2563EB"/>
-                <circle cx="600" cy="20" r="6" fill="#2563EB" fill-opacity="0.2"/>
-              </svg>
-              <!-- X labels -->
-              <div class="flex justify-between mt-2 text-[10px] text-muted-soft tnum">
-                <span>9月</span><span>10月</span><span>11月</span><span>12月</span><span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span><span>8月</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Breakdown -->
-          <div class="bg-surface-card border border-hairline rounded-xl">
-            <div class="px-5 py-4 border-b border-hairline-soft">
-              <h2 class="text-[15px] font-semibold text-ink" style="letter-spacing:-0.1px;">按套餐</h2>
-              <p class="text-[12px] text-muted mt-0.5">收入占比</p>
-            </div>
-            <div class="p-5 space-y-4">
-              <!-- Donut -->
-              <div class="flex items-center gap-5">
-                <svg width="92" height="92" viewBox="0 0 42 42" class="shrink-0">
-                  <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#F4F4F5" stroke-width="6"/>
-                  <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#1E3A8A" stroke-width="6" stroke-dasharray="62 100" stroke-dashoffset="25" transform="rotate(-90 21 21)"/>
-                  <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#2563EB" stroke-width="6" stroke-dasharray="28 100" stroke-dashoffset="-37" transform="rotate(-90 21 21)"/>
-                  <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#60A5FA" stroke-width="6" stroke-dasharray="10 100" stroke-dashoffset="-65" transform="rotate(-90 21 21)"/>
-                </svg>
-                <div class="flex-1 min-w-0">
-                  <div class="text-[28px] font-semibold tnum text-ink" style="line-height:1;letter-spacing:-0.6px;">¥48.2k</div>
-                  <div class="text-[11px] text-muted mt-1">本月总收入</div>
-                </div>
-              </div>
-              <!-- Legend rows -->
-              <div class="space-y-2.5">
-                <div class="flex items-center gap-2 text-[12px]">
-                  <span class="w-2 h-2 rounded-full bg-viz-1"></span>
-                  <span class="text-ink font-medium">Pro</span>
-                  <span class="ml-auto tnum text-muted">¥29.9k</span>
-                  <span class="tnum text-muted-soft w-9 text-right">62%</span>
-                </div>
-                <div class="flex items-center gap-2 text-[12px]">
-                  <span class="w-2 h-2 rounded-full bg-viz-2"></span>
-                  <span class="text-ink font-medium">Starter</span>
-                  <span class="ml-auto tnum text-muted">¥13.5k</span>
-                  <span class="tnum text-muted-soft w-9 text-right">28%</span>
-                </div>
-                <div class="flex items-center gap-2 text-[12px]">
-                  <span class="w-2 h-2 rounded-full bg-viz-3"></span>
-                  <span class="text-ink font-medium">Enterprise</span>
-                  <span class="ml-auto tnum text-muted">¥4.8k</span>
-                  <span class="tnum text-muted-soft w-9 text-right">10%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ═══ TABLE — the workhorse, density-forward ═══ -->
-        <div class="bg-surface-card border border-hairline rounded-xl">
-          <!-- Toolbar -->
-          <div class="flex items-center gap-3 px-5 py-3.5 border-b border-hairline-soft">
-            <h2 class="text-[15px] font-semibold text-ink" style="letter-spacing:-0.1px;">最近客户</h2>
-            <span class="text-[12px] text-muted tnum">128 条</span>
-            <div class="ml-auto flex items-center gap-2">
-              <!-- Search input -->
-              <div class="relative">
-                <svg class="w-3.5 h-3.5 text-muted-soft absolute left-2.5 top-1/2 -translate-y-1/2" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
-                <input type="text" placeholder="搜索客户…" class="bloom w-52 h-8 pl-8 pr-3 text-[12px] text-ink bg-surface-soft border border-transparent rounded-md placeholder:text-muted-soft transition-all duration-120 ease-out-expo" />
-              </div>
-              <!-- Filter pills -->
-              <button class="h-8 px-2.5 text-[12px] font-medium text-muted hover:text-ink bg-surface-soft rounded-md flex items-center gap-1.5 transition-colors">
-                套餐 <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor"><path d="M5 6.5L1.5 3h7z"/></svg>
-              </button>
-              <button class="h-8 px-2.5 text-[12px] font-medium text-muted hover:text-ink bg-surface-soft rounded-md flex items-center gap-1.5 transition-colors">
-                状态 <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="currentColor"><path d="M5 6.5L1.5 3h7z"/></svg>
-              </button>
-              <!-- Icon button -->
-              <button class="w-8 h-8 flex items-center justify-center text-muted hover:text-ink hover:bg-surface-soft rounded-md transition-colors">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M3 4h10M3 12h10"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Table -->
-          <table class="w-full">
-            <thead>
-              <tr class="bg-surface-inset h-9 text-micro text-muted">
-                <th class="text-left font-semibold px-5 w-10"><input type="checkbox" class="rounded-xs accent-accent"/></th>
-                <th class="text-left font-semibold px-3">客户</th>
-                <th class="text-left font-semibold px-3">邮箱</th>
-                <th class="text-left font-semibold px-3">套餐</th>
-                <th class="text-right font-semibold px-3">MRR</th>
-                <th class="text-left font-semibold px-3">状态</th>
-                <th class="text-right font-semibold px-3">注册时间</th>
-                <th class="w-10"></th>
-              </tr>
-            </thead>
-            <tbody class="text-[13px]">
-              <!-- Row 1 -->
-              <tr class="row-wash border-t border-hairline-soft h-11">
-                <td class="px-5"><input type="checkbox" class="rounded-xs accent-accent"/></td>
-                <td class="px-3">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-viz-3 to-accent flex items-center justify-center text-white text-[11px] font-semibold shrink-0">AL</div>
-                    <span class="font-semibold text-ink">Ada Lovelace</span>
-                  </div>
-                </td>
-                <td class="px-3 text-muted">ada@analytical.io</td>
-                <td class="px-3"><span class="inline-flex items-center text-[11px] font-medium text-ink-soft bg-surface-panel rounded-xs px-1.5 py-0.5">Pro</span></td>
-                <td class="px-3 text-right tnum font-medium text-ink">¥990</td>
-                <td class="px-3"><span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-success"><span class="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_0_3px_#D1FAE5]"></span>活跃</span></td>
-                <td class="px-3 text-right tnum text-muted text-[12px]">2026-08-02</td>
-                <td class="px-3"><button class="w-7 h-7 flex items-center justify-center text-muted-soft hover:text-ink rounded-md"><svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12" cy="8" r="1.3"/></svg></button></td>
-              </tr>
-              <!-- Row 2 (selected — accent faint) -->
-              <tr class="row-wash border-t border-hairline-soft h-11 bg-accent-faint">
-                <td class="px-5"><input type="checkbox" checked class="rounded-xs accent-accent"/></td>
-                <td class="px-3">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-warning to-danger flex items-center justify-center text-white text-[11px] font-semibold shrink-0">GT</div>
-                    <span class="font-semibold text-ink">Grace Tulip</span>
-                  </div>
-                </td>
-                <td class="px-3 text-muted">grace@northwind.co</td>
-                <td class="px-3"><span class="inline-flex items-center text-[11px] font-medium text-accent-hover bg-accent-soft rounded-xs px-1.5 py-0.5">Enterprise</span></td>
-                <td class="px-3 text-right tnum font-medium text-ink">¥4,800</td>
-                <td class="px-3"><span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-success"><span class="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_0_3px_#D1FAE5]"></span>活跃</span></td>
-                <td class="px-3 text-right tnum text-muted text-[12px]">2026-07-21</td>
-                <td class="px-3"><button class="w-7 h-7 flex items-center justify-center text-muted-soft hover:text-ink rounded-md"><svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12" cy="8" r="1.3"/></svg></button></td>
-              </tr>
-              <!-- Row 3 -->
-              <tr class="row-wash border-t border-hairline-soft h-11">
-                <td class="px-5"><input type="checkbox" class="rounded-xs accent-accent"/></td>
-                <td class="px-3">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-viz-violet to-viz-1 flex items-center justify-center text-white text-[11px] font-semibold shrink-0">MK</div>
-                    <span class="font-semibold text-ink">Mira Kovač</span>
-                  </div>
-                </td>
-                <td class="px-3 text-muted">mira@kovac.studio</td>
-                <td class="px-3"><span class="inline-flex items-center text-[11px] font-medium text-ink-soft bg-surface-panel rounded-xs px-1.5 py-0.5">Starter</span></td>
-                <td class="px-3 text-right tnum font-medium text-ink">¥120</td>
-                <td class="px-3"><span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-warning"><span class="w-1.5 h-1.5 rounded-full bg-warning shadow-[0_0_0_3px_#FEF3C7]"></span>试用中</span></td>
-                <td class="px-3 text-right tnum text-muted text-[12px]">2026-08-09</td>
-                <td class="px-3"><button class="w-7 h-7 flex items-center justify-center text-muted-soft hover:text-ink rounded-md"><svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12" cy="8" r="1.3"/></svg></button></td>
-              </tr>
-              <!-- Row 4 -->
-              <tr class="row-wash border-t border-hairline-soft h-11">
-                <td class="px-5"><input type="checkbox" class="rounded-xs accent-accent"/></td>
-                <td class="px-3">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-viz-cool to-viz-2 flex items-center justify-center text-white text-[11px] font-semibold shrink-0">DR</div>
-                    <span class="font-semibold text-ink">Dario Rossi</span>
-                  </div>
-                </td>
-                <td class="px-3 text-muted">dario@rossi.dev</td>
-                <td class="px-3"><span class="inline-flex items-center text-[11px] font-medium text-ink-soft bg-surface-panel rounded-xs px-1.5 py-0.5">Pro</span></td>
-                <td class="px-3 text-right tnum font-medium text-ink">¥990</td>
-                <td class="px-3"><span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-danger"><span class="w-1.5 h-1.5 rounded-full bg-danger shadow-[0_0_0_3px_#FEE2E2]"></span>已停用</span></td>
-                <td class="px-3 text-right tnum text-muted text-[12px]">2026-06-15</td>
-                <td class="px-3"><button class="w-7 h-7 flex items-center justify-center text-muted-soft hover:text-ink rounded-md"><svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12" cy="8" r="1.3"/></svg></button></td>
-              </tr>
-              <!-- Row 5 -->
-              <tr class="row-wash border-t border-hairline-soft h-11">
-                <td class="px-5"><input type="checkbox" class="rounded-xs accent-accent"/></td>
-                <td class="px-3">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-7 h-7 rounded-full bg-gradient-to-br from-viz-rose to-viz-violet flex items-center justify-center text-white text-[11px] font-semibold shrink-0">YN</div>
-                    <span class="font-semibold text-ink">Yuki Nakamura</span>
-                  </div>
-                </td>
-                <td class="px-3 text-muted">yuki@nakamura.jp</td>
-                <td class="px-3"><span class="inline-flex items-center text-[11px] font-medium text-ink-soft bg-surface-panel rounded-xs px-1.5 py-0.5">Pro</span></td>
-                <td class="px-3 text-right tnum font-medium text-ink">¥990</td>
-                <td class="px-3"><span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted-soft shadow-[0_0_0_3px_#F4F4F5]"></span>待审核</span></td>
-                <td class="px-3 text-right tnum text-muted text-[12px]">2026-08-10</td>
-                <td class="px-3"><button class="w-7 h-7 flex items-center justify-center text-muted-soft hover:text-ink rounded-md"><svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="4" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="12" cy="8" r="1.3"/></svg></button></td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Pagination -->
-          <div class="flex items-center gap-3 px-5 py-3 border-t border-hairline-soft text-[12px]">
-            <span class="text-muted">显示 <span class="tnum text-ink font-medium">1–5</span> / 共 <span class="tnum text-ink font-medium">128</span> 条</span>
-            <div class="ml-auto flex items-center gap-1">
-              <button class="w-7 h-7 flex items-center justify-center text-muted-faint hover:text-ink rounded-md hover:bg-surface-soft transition-colors" disabled>
-                <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4L6 8l4 4"/></svg>
-              </button>
-              <button class="w-7 h-7 flex items-center justify-center text-ink font-semibold bg-surface-panel rounded-md tnum">1</button>
-              <button class="w-7 h-7 flex items-center justify-center text-muted hover:text-ink rounded-md hover:bg-surface-soft tnum transition-colors">2</button>
-              <button class="w-7 h-7 flex items-center justify-center text-muted hover:text-ink rounded-md hover:bg-surface-soft tnum transition-colors">3</button>
-              <span class="text-muted-soft px-1">…</span>
-              <button class="w-7 h-7 flex items-center justify-center text-muted hover:text-ink rounded-md hover:bg-surface-soft tnum transition-colors">26</button>
-              <button class="w-7 h-7 flex items-center justify-center text-ink hover:bg-surface-soft rounded-md transition-colors">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
-              </button>
-              <select class="tiny ml-2 h-7 text-[12px] text-muted bg-transparent border border-hairline rounded-md px-2">
-                <option>10 / 页</option>
-                <option selected>20 / 页</option>
-                <option>50 / 页</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- ═══ COMPONENT REFERENCE STRIP — quick visual catalog ═══ -->
-        <div class="mt-6 bg-surface-card border border-hairline rounded-xl p-5">
-          <h2 class="text-[15px] font-semibold text-ink mb-1" style="letter-spacing:-0.1px;">组件速览</h2>
-          <p class="text-[12px] text-muted mb-5">设计系统核心组件的视觉索引</p>
-
-          <div class="grid grid-cols-2 gap-x-8 gap-y-5">
-            <!-- Buttons -->
+      <!-- ═══════════════════════════════════════════════════════════════
+           SIGNATURE CAL.COM FEATURE: EMBEDDED PRODUCT UI ARTIFACT CARDS
+           Showing actual product UI fragments (Scheduling Calendar, Interactive
+           Area Chart & Subscriptions, Integration Tiles) directly inside cards!
+           ═══════════════════════════════════════════════════════════════ -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left 2-Cols: Product UI Fragment - Interactive Scheduling & Booking Chrome -->
+        <div class="lg:col-span-2 bg-surface-card border border-hairline rounded-lg p-6 space-y-5">
+          <div class="flex items-center justify-between pb-4 border-b border-hairline-soft">
             <div>
-              <div class="text-micro text-muted mb-2">按钮</div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <button class="h-8 px-3.5 text-[13px] font-semibold text-white bg-ink hover:bg-ink-soft rounded-md transition-colors">主要</button>
-                <button class="h-8 px-3.5 text-[13px] font-semibold text-white bg-accent hover:bg-accent-hover rounded-md transition-colors">强调</button>
-                <button class="h-8 px-3.5 text-[13px] font-semibold text-ink bg-surface-card border border-hairline hover:bg-surface-soft rounded-md transition-colors">次要</button>
-                <button class="h-8 px-2.5 text-[13px] font-semibold text-muted hover:text-ink hover:bg-surface-soft rounded-md transition-colors">幽灵</button>
-                <button class="w-8 h-8 flex items-center justify-center text-muted hover:text-ink hover:bg-surface-soft rounded-md transition-colors">
-                  <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="5"/></svg>
+              <div class="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Product UI Chrome</div>
+              <h2 class="font-display text-xl text-ink">实时预约与排程工作台</h2>
+            </div>
+            <span class="px-2.5 py-1 rounded-pill bg-canvas border border-hairline text-xs font-semibold text-ink">
+              15 分钟咨询服务
+            </span>
+          </div>
+
+          <!-- Embedded Calendar & Slot Picker Widget Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-canvas border border-hairline rounded-lg p-5">
+            <!-- Calendar Date Matrix -->
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="font-semibold text-sm text-ink" id="calendarMonthLabel">2026年 8月</span>
+                <div class="flex items-center gap-1">
+                  <button onclick="prevMonth()" class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-surface-soft border border-hairline text-ink">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  </button>
+                  <button onclick="nextMonth()" class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-surface-soft border border-hairline text-ink">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Day Names -->
+              <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted mb-2">
+                <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+              </div>
+
+              <!-- Dates Grid -->
+              <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium" id="calendarGrid">
+                <!-- Javascript rendered calendar -->
+              </div>
+            </div>
+
+            <!-- Time Slots & Booking Summary -->
+            <div class="flex flex-col justify-between border-t md:border-t-0 md:border-l border-hairline pt-4 md:pt-0 md:pl-6">
+              <div>
+                <div class="text-xs font-semibold text-muted mb-3 flex items-center justify-between">
+                  <span>选择可用时间段</span>
+                  <span class="text-ink font-mono" id="selectedDateText">8月 11日 (周二)</span>
+                </div>
+
+                <!-- Slot Buttons -->
+                <div class="grid grid-cols-2 gap-2" id="slotContainer">
+                  <button onclick="selectSlot(this, '09:00')" class="slot-btn border border-hairline rounded-md py-2 text-xs font-medium text-ink hover:border-primary hover:bg-surface-soft transition-all">09:00 - 09:15</button>
+                  <button onclick="selectSlot(this, '10:30')" class="slot-btn border border-primary bg-primary text-white rounded-md py-2 text-xs font-medium transition-all">10:30 - 10:45</button>
+                  <button onclick="selectSlot(this, '14:00')" class="slot-btn border border-hairline rounded-md py-2 text-xs font-medium text-ink hover:border-primary hover:bg-surface-soft transition-all">14:00 - 14:15</button>
+                  <button onclick="selectSlot(this, '16:30')" class="slot-btn border border-hairline rounded-md py-2 text-xs font-medium text-ink hover:border-primary hover:bg-surface-soft transition-all">16:30 - 16:45</button>
+                </div>
+              </div>
+
+              <!-- Booking Quick Action -->
+              <div class="mt-4 pt-4 border-t border-hairline-soft space-y-2">
+                <div class="text-xs text-muted flex items-center justify-between">
+                  <span>对接客户:</span>
+                  <span class="font-semibold text-ink">Ada Lovelace</span>
+                </div>
+                <button onclick="confirmBooking()" class="w-full h-9 bg-primary text-on-primary hover:bg-primary-active rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                  <span>确认预约此时段</span>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Badges -->
-            <div>
-              <div class="text-micro text-muted mb-2">徽章</div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="inline-flex items-center text-[11px] font-medium text-ink-soft bg-surface-panel rounded-xs px-1.5 py-0.5">中性</span>
-                <span class="inline-flex items-center text-[11px] font-medium text-accent-hover bg-accent-soft rounded-xs px-1.5 py-0.5">强调</span>
-                <span class="inline-flex items-center text-[11px] font-medium text-success bg-success-soft rounded-xs px-1.5 py-0.5">成功</span>
-                <span class="inline-flex items-center text-[11px] font-medium text-warning bg-warning-soft rounded-xs px-1.5 py-0.5">警告</span>
-                <span class="inline-flex items-center text-[11px] font-medium text-danger bg-danger-soft rounded-xs px-1.5 py-0.5">危险</span>
-                <span class="inline-flex items-center text-[11px] font-medium text-ink-soft bg-surface-panel rounded-full px-2 py-0.5">胶囊</span>
+        <!-- Right 1-Col: Automation & Integrations Chrome Tile -->
+        <div class="bg-surface-card border border-hairline rounded-lg p-6 flex flex-col justify-between space-y-5">
+          <div>
+            <div class="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Integrations</div>
+            <h2 class="font-display text-xl text-ink">系统生态与自动化集成</h2>
+            <p class="text-muted text-xs mt-1">已连接服务与事件 Hook 状态监控。</p>
+
+            <!-- Integration Tiles List -->
+            <div class="mt-4 space-y-2.5">
+              
+              <!-- Tile 1: Stripe -->
+              <div class="p-3 bg-canvas border border-hairline rounded-md flex items-center justify-between hover:border-muted transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-md bg-badge-violet/10 text-badge-violet flex items-center justify-center font-bold text-xs">S</div>
+                  <div>
+                    <div class="text-xs font-semibold text-ink">Stripe 支付</div>
+                    <div class="text-[11px] text-muted">自动同步账单与退款</div>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked onchange="toggleIntegration('Stripe', this)" class="sr-only peer">
+                  <div class="w-8 h-4 bg-hairline peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                </label>
               </div>
+
+              <!-- Tile 2: Lark / Feishu -->
+              <div class="p-3 bg-canvas border border-hairline rounded-md flex items-center justify-between hover:border-muted transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-md bg-badge-emerald/10 text-badge-emerald flex items-center justify-center font-bold text-xs">L</div>
+                  <div>
+                    <div class="text-xs font-semibold text-ink">飞书 / Lark 日历</div>
+                    <div class="text-[11px] text-muted">双向会议与日程推送</div>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked onchange="toggleIntegration('飞书日历', this)" class="sr-only peer">
+                  <div class="w-8 h-4 bg-hairline peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+
+              <!-- Tile 3: WeChat Pay -->
+              <div class="p-3 bg-canvas border border-hairline rounded-md flex items-center justify-between hover:border-muted transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-md bg-success/10 text-success flex items-center justify-center font-bold text-xs">W</div>
+                  <div>
+                    <div class="text-xs font-semibold text-ink">微信支付 Webhook</div>
+                    <div class="text-[11px] text-muted">实时交易通知回调</div>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked onchange="toggleIntegration('微信支付', this)" class="sr-only peer">
+                  <div class="w-8 h-4 bg-hairline peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+
             </div>
+          </div>
 
-            <!-- Status dots -->
+          <button onclick="showToast('跳转至集成中心设置页面')" class="w-full h-8 border border-hairline hover:bg-canvas rounded-md text-xs font-semibold text-ink transition-colors">
+            管理所有 18 项扩展集成 →
+          </button>
+        </div>
+
+      </div>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           CHARTS ROW: Area Chart (Revenue Trend) & Tier Breakdown Donut
+           ═══════════════════════════════════════════════════════════════ -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Revenue Trend Area Chart (2 Cols) -->
+        <div class="lg:col-span-2 bg-surface-card border border-hairline rounded-lg p-6 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-hairline-soft">
             <div>
-              <div class="text-micro text-muted mb-2">状态点</div>
-              <div class="flex items-center gap-4">
-                <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-success"><span class="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_0_3px_#D1FAE5]"></span>活跃</span>
-                <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-warning"><span class="w-1.5 h-1.5 rounded-full bg-warning shadow-[0_0_0_3px_#FEF3C7]"></span>试用</span>
-                <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-danger"><span class="w-1.5 h-1.5 rounded-full bg-danger shadow-[0_0_0_3px_#FEE2E2]"></span>停用</span>
-                <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted"><span class="w-1.5 h-1.5 rounded-full bg-muted-soft shadow-[0_0_0_3px_#F4F4F5]"></span>待审</span>
-              </div>
+              <h3 class="font-display text-lg text-ink">收入趋势分析</h3>
+              <p class="text-xs text-muted">包含订阅、单次服务与协议扩展收入</p>
             </div>
-
-            <!-- Inputs -->
-            <div>
-              <div class="text-micro text-muted mb-2">输入</div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <input type="text" placeholder="默认" class="bloom h-8 px-2.5 text-[12px] text-ink bg-surface-card border border-hairline rounded-md w-32 placeholder:text-muted-soft transition-all" />
-                <input type="text" placeholder="带图标" class="bloom h-8 px-2.5 pl-8 text-[12px] text-ink bg-surface-card border border-hairline rounded-md w-32 placeholder:text-muted-soft transition-all relative" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2214%22 height=%2214%22 viewBox=%220 0 16 16%22 fill=%22none%22 stroke=%22%23A1A1AA%22 stroke-width=%221.5%22%3E%3Ccircle cx=%227%22 cy=%227%22 r=%224.5%22/%3E%3Cpath d=%22M10.5 10.5L14 14%22/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:left 8px center;" />
-                <input type="text" value="错误态" class="h-8 px-2.5 text-[12px] text-ink bg-surface-card border border-danger rounded-md w-32" />
-              </div>
+            
+            <div class="flex items-center gap-3 text-xs">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span> 实际收入</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-hairline"></span> 目标预期</span>
             </div>
+          </div>
 
-            <!-- Toggle -->
-            <div>
-              <div class="text-micro text-muted mb-2">开关</div>
-              <div class="flex items-center gap-4">
-                <button class="relative w-8 h-[18px] bg-accent rounded-full transition-colors"><span class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform"></span></button>
-                <button class="relative w-8 h-[18px] bg-surface-active rounded-full transition-colors"><span class="absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform"></span></button>
-              </div>
-            </div>
+          <!-- SVG Area Chart -->
+          <div class="relative pt-2">
+            <svg class="w-full h-52 overflow-visible" viewBox="0 0 600 180" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#111111" stop-opacity="0.12"/>
+                  <stop offset="100%" stop-color="#111111" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              
+              <!-- Gridlines -->
+              <line x1="0" y1="30" x2="600" y2="30" stroke="#f3f4f6" stroke-width="1"/>
+              <line x1="0" y1="80" x2="600" y2="80" stroke="#f3f4f6" stroke-width="1"/>
+              <line x1="0" y1="130" x2="600" y2="130" stroke="#f3f4f6" stroke-width="1"/>
 
-            <!-- Tooltip-ish chip -->
-            <div>
-              <div class="text-micro text-muted mb-2">代码 / ID</div>
-              <div class="flex items-center gap-2">
-                <code class="font-mono text-[12px] text-ink bg-surface-inset border border-hairline-soft rounded-xs px-1.5 py-0.5 tnum">usr_2bF9k</code>
-                <code class="font-mono text-[12px] text-success bg-success-soft rounded-xs px-1.5 py-0.5">200 OK</code>
-              </div>
+              <!-- Area Fill -->
+              <path id="chartArea" d="M0,150 Q100,120 200,130 T400,60 T600,20 L600,180 L0,180 Z" fill="url(#areaGradient)"/>
+              
+              <!-- Line -->
+              <path id="chartLine" d="M0,150 Q100,120 200,130 T400,60 T600,20" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round"/>
+
+              <!-- Key Data Points -->
+              <circle cx="200" cy="130" r="4" fill="#111111" class="hover:r-6 transition-all cursor-pointer"/>
+              <circle cx="400" cy="60" r="4" fill="#111111" class="hover:r-6 transition-all cursor-pointer"/>
+              <circle cx="600" cy="20" r="5" fill="#111111" class="ring-4 ring-hairline"/>
+            </svg>
+
+            <!-- X Axis Labels -->
+            <div class="flex justify-between text-[11px] text-muted font-mono pt-2">
+              <span>9月</span><span>10月</span><span>11月</span><span>12月</span><span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span><span>8月</span>
             </div>
           </div>
         </div>
 
+        <!-- Subscription Tier Breakdown (1 Col) -->
+        <div class="bg-surface-card border border-hairline rounded-lg p-6 flex flex-col justify-between space-y-4">
+          <div>
+            <h3 class="font-display text-lg text-ink">订阅套餐占比</h3>
+            <p class="text-xs text-muted">本月各类套餐营收占比概览</p>
+
+            <div class="flex items-center gap-6 mt-6">
+              <!-- Donut SVG -->
+              <svg width="100" height="100" viewBox="0 0 42 42" class="shrink-0 transform -rotate-90">
+                <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#f3f4f6" stroke-width="5"/>
+                <!-- Pro 62% -->
+                <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#111111" stroke-width="5" stroke-dasharray="62 100" stroke-dashoffset="0"/>
+                <!-- Starter 28% -->
+                <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#3b82f6" stroke-width="5" stroke-dasharray="28 100" stroke-dashoffset="-62"/>
+                <!-- Enterprise 10% -->
+                <circle cx="21" cy="21" r="15.9" fill="transparent" stroke="#8b5cf6" stroke-width="5" stroke-dasharray="10 100" stroke-dashoffset="-90"/>
+              </svg>
+
+              <div class="space-y-1">
+                <div class="font-display text-2xl text-ink tnum">¥48,210</div>
+                <div class="text-xs text-muted">本月总确认收入</div>
+              </div>
+            </div>
+
+            <!-- Legend List -->
+            <div class="space-y-3 mt-6 pt-4 border-t border-hairline-soft text-xs">
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span> Pro 专业版</span>
+                <span class="font-mono text-ink font-semibold">¥29,890 (62%)</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-brand-accent"></span> Starter 初创版</span>
+                <span class="font-mono text-ink font-semibold">¥13,500 (28%)</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-badge-violet"></span> Enterprise 企业版</span>
+                <span class="font-mono text-ink font-semibold">¥4,820 (10%)</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="showToast('导出套餐财务报表')" class="w-full h-8 border border-hairline hover:bg-canvas rounded-md text-xs font-semibold text-ink transition-colors">
+            导出详细财务 PDF 报表
+          </button>
+        </div>
+
       </div>
-    </main>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           TABLE SECTION: Density-Forward Customers & Orders Worktable
+           ═══════════════════════════════════════════════════════════════ -->
+      <div class="bg-surface-card border border-hairline rounded-lg overflow-hidden space-y-0">
+        
+        <!-- Table Toolbar -->
+        <div class="p-4 border-b border-hairline flex flex-col sm:flex-row items-center justify-between gap-3 bg-canvas">
+          <div class="flex items-center gap-3">
+            <h3 class="font-display text-base text-ink">最近客户与订单</h3>
+            <span class="px-2 py-0.5 rounded-pill bg-surface-soft border border-hairline text-xs font-mono text-muted">128 条记录</span>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <!-- Search Input -->
+            <div class="relative flex-1 sm:flex-initial">
+              <svg class="w-3.5 h-3.5 text-muted absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="搜索姓名、邮箱或套餐..." class="w-full sm:w-56 h-8 pl-8 pr-3 bg-surface-soft border border-hairline rounded-md text-xs focus-ring text-ink placeholder:text-muted" />
+            </div>
+
+            <!-- Status Filter -->
+            <select onchange="filterStatus(this.value)" class="h-8 px-2 bg-surface-soft border border-hairline rounded-md text-xs font-medium text-ink focus-ring">
+              <option value="all">全部状态</option>
+              <option value="active">活跃中</option>
+              <option value="trial">试用中</option>
+              <option value="disabled">已停用</option>
+            </select>
+
+            <!-- Table Density Control -->
+            <div class="hidden md:flex items-center bg-surface-soft p-0.5 rounded-md border border-hairline text-xs font-medium text-muted">
+              <button onclick="setDensity('compact')" class="density-btn px-2 py-0.5 rounded-xs hover:text-ink">紧凑</button>
+              <button onclick="setDensity('normal')" class="density-btn px-2 py-0.5 rounded-xs text-ink bg-canvas shadow-subtle font-semibold">舒适</button>
+              <button onclick="setDensity('loose')" class="density-btn px-2 py-0.5 rounded-xs hover:text-ink">宽松</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Element -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs" id="customerTable">
+            <thead>
+              <tr class="bg-surface-soft border-b border-hairline text-muted font-medium">
+                <th class="p-3 pl-4 w-10"><input type="checkbox" onclick="toggleSelectAll(this)" class="rounded border-hairline accent-primary"></th>
+                <th class="p-3">客户姓名</th>
+                <th class="p-3">电子邮箱</th>
+                <th class="p-3">套餐类型</th>
+                <th class="p-3">状态</th>
+                <th class="p-3 text-right">消费金额</th>
+                <th class="p-3">最新更新</th>
+                <th class="p-3 pr-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-hairline-soft font-normal text-ink" id="tableBody">
+              
+              <tr class="table-row hover:bg-surface-soft/60 transition-colors">
+                <td class="p-3 pl-4"><input type="checkbox" class="row-checkbox rounded border-hairline accent-primary"></td>
+                <td class="p-3 font-semibold flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-badge-orange/20 text-badge-orange flex items-center justify-center font-bold text-xs">
+                    AL
+                  </div>
+                  <span>Ada Lovelace</span>
+                </td>
+                <td class="p-3 text-muted font-mono">ada@hgbord.com</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-pill bg-primary text-white font-semibold text-[11px]">Pro 专业版</span></td>
+                <td class="p-3"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill bg-success/10 text-success font-semibold text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-success"></span> 活跃</span></td>
+                <td class="p-3 text-right font-mono font-semibold tnum">¥2,400.00</td>
+                <td class="p-3 text-muted">2 分钟前</td>
+                <td class="p-3 pr-4 text-right">
+                  <button onclick="showToast('已查看 Ada Lovelace 档案')" class="hover:underline font-semibold text-primary">详情</button>
+                </td>
+              </tr>
+
+              <tr class="table-row hover:bg-surface-soft/60 transition-colors">
+                <td class="p-3 pl-4"><input type="checkbox" class="row-checkbox rounded border-hairline accent-primary"></td>
+                <td class="p-3 font-semibold flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-badge-pink/20 text-badge-pink flex items-center justify-center font-bold text-xs">
+                    AT
+                  </div>
+                  <span>Alan Turing</span>
+                </td>
+                <td class="p-3 text-muted font-mono">turing@enigma.org</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-pill bg-badge-violet/10 text-badge-violet font-semibold text-[11px]">Enterprise</span></td>
+                <td class="p-3"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill bg-success/10 text-success font-semibold text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-success"></span> 活跃</span></td>
+                <td class="p-3 text-right font-mono font-semibold tnum">¥12,800.00</td>
+                <td class="p-3 text-muted">1 小时前</td>
+                <td class="p-3 pr-4 text-right">
+                  <button onclick="showToast('已查看 Alan Turing 档案')" class="hover:underline font-semibold text-primary">详情</button>
+                </td>
+              </tr>
+
+              <tr class="table-row hover:bg-surface-soft/60 transition-colors">
+                <td class="p-3 pl-4"><input type="checkbox" class="row-checkbox rounded border-hairline accent-primary"></td>
+                <td class="p-3 font-semibold flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-brand-accent/20 text-brand-accent flex items-center justify-center font-bold text-xs">
+                    GC
+                  </div>
+                  <span>Grace Hopper</span>
+                </td>
+                <td class="p-3 text-muted font-mono">grace@navy.mil</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-pill bg-surface-soft border border-hairline font-semibold text-[11px]">Starter</span></td>
+                <td class="p-3"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill bg-warning/10 text-warning font-semibold text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-warning"></span> 试用中</span></td>
+                <td class="p-3 text-right font-mono font-semibold tnum">¥480.00</td>
+                <td class="p-3 text-muted">3 小时前</td>
+                <td class="p-3 pr-4 text-right">
+                  <button onclick="showToast('已查看 Grace Hopper 档案')" class="hover:underline font-semibold text-primary">详情</button>
+                </td>
+              </tr>
+
+              <tr class="table-row hover:bg-surface-soft/60 transition-colors">
+                <td class="p-3 pl-4"><input type="checkbox" class="row-checkbox rounded border-hairline accent-primary"></td>
+                <td class="p-3 font-semibold flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-badge-emerald/20 text-badge-emerald flex items-center justify-center font-bold text-xs">
+                    CV
+                  </div>
+                  <span>John von Neumann</span>
+                </td>
+                <td class="p-3 text-muted font-mono">john@ias.edu</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-pill bg-primary text-white font-semibold text-[11px]">Pro 专业版</span></td>
+                <td class="p-3"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill bg-error/10 text-error font-semibold text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-error"></span> 已停用</span></td>
+                <td class="p-3 text-right font-mono font-semibold tnum">¥0.00</td>
+                <td class="p-3 text-muted">1 天前</td>
+                <td class="p-3 pr-4 text-right">
+                  <button onclick="showToast('已查看 John von Neumann 档案')" class="hover:underline font-semibold text-primary">详情</button>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Footer Pagination -->
+        <div class="p-3 px-4 bg-surface-soft border-t border-hairline flex items-center justify-between text-xs text-muted">
+          <span>显示 1 - 4 条，共 128 条记录</span>
+          <div class="flex items-center gap-1">
+            <button onclick="showToast('上一页')" class="px-2.5 py-1 border border-hairline rounded-md hover:bg-canvas text-ink font-medium">上一页</button>
+            <button onclick="showToast('下一页')" class="px-2.5 py-1 border border-hairline rounded-md hover:bg-canvas text-ink font-medium">下一页</button>
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           PRE-FOOTER CTA BAND (cta-band-light per DESIGN.md)
+           #f5f5f5 light gray surface, display-sm Cal Sans headline, black CTA
+           ═══════════════════════════════════════════════════════════════ -->
+      <div class="bg-surface-card border border-hairline rounded-lg p-8 md:p-12 text-center space-y-4">
+        <h2 class="font-display text-2xl md:text-3xl text-ink">
+          更智能、更精简的业务排程与控制中心
+        </h2>
+        <p class="text-muted text-sm max-w-xl mx-auto">
+          无需复杂的配置与花哨的装饰，hgbord 带来极简而强大的模块化工作体验。
+        </p>
+        <div class="pt-2">
+          <button onclick="openModal()" class="h-10 px-6 bg-primary text-on-primary hover:bg-primary-active rounded-md font-semibold text-sm transition-all shadow-subtle inline-flex items-center gap-2">
+            <span>立即开启新工作流</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: 预约中心 (Appointments view placeholder/content) -->
+    <div id="tab-appointments" class="tab-page hidden space-y-6">
+      <div class="pb-4 border-b border-hairline">
+        <h1 class="font-display text-2xl text-ink">预约排程中心</h1>
+        <p class="text-muted text-sm mt-1">集中管理所有客户的 1:1 咨询、团队会议与订单确认日程。</p>
+      </div>
+
+      <div class="bg-surface-card border border-hairline rounded-lg p-8 text-center space-y-3">
+        <div class="w-12 h-12 rounded-full bg-surface-soft border border-hairline text-ink flex items-center justify-center mx-auto font-bold text-lg">
+          📅
+        </div>
+        <h3 class="font-display text-lg text-ink">暂无冲突日程</h3>
+        <p class="text-xs text-muted max-w-md mx-auto">所有预约均已自动同步至飞书日历与系统后台。</p>
+        <button onclick="openModal()" class="h-8 px-4 bg-primary text-white rounded-md text-xs font-semibold">创建新预约</button>
+      </div>
+    </div>
+
+    <!-- TAB 3: 客户管理 (Customers view) -->
+    <div id="tab-customers" class="tab-page hidden space-y-6">
+      <div class="pb-4 border-b border-hairline">
+        <h1 class="font-display text-2xl text-ink">客户管理</h1>
+        <p class="text-muted text-sm mt-1">查看所有订阅用户、活跃状态及交易记录。</p>
+      </div>
+      <div class="bg-surface-card border border-hairline rounded-lg p-6">
+        <p class="text-xs text-muted">更多高级客户筛选工具加载中...</p>
+      </div>
+    </div>
+
+    <!-- TAB 4: 分析统计 (Analytics view) -->
+    <div id="tab-analytics" class="tab-page hidden space-y-6">
+      <div class="pb-4 border-b border-hairline">
+        <h1 class="font-display text-2xl text-ink">数据分析与报表</h1>
+        <p class="text-muted text-sm mt-1">深入了解转化率、留存率与团队效率指标。</p>
+      </div>
+      <div class="bg-surface-card border border-hairline rounded-lg p-6">
+        <p class="text-xs text-muted">自定义报表生成器准备就绪。</p>
+      </div>
+    </div>
+
+    <!-- TAB 5: 系统设置 (Settings view) -->
+    <div id="tab-settings" class="tab-page hidden space-y-6">
+      <div class="pb-4 border-b border-hairline">
+        <h1 class="font-display text-2xl text-ink">系统设置</h1>
+        <p class="text-muted text-sm mt-1">管理 API 密钥、扩展集成以及账户偏好。</p>
+      </div>
+      <div class="bg-surface-card border border-hairline rounded-lg p-6">
+        <p class="text-xs text-muted">当前版本: hgbord v0.1 (Cal.com Design System Spec)</p>
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       3. DARK FOOTER (Cal.com footer spec: #101010 surface-dark)
+       The only dark surface on the page — visually closes the page layout.
+       ═══════════════════════════════════════════════════════════════ -->
+  <footer class="bg-surface-dark text-on-dark-soft pt-12 pb-8 border-t border-surface-dark-elevated mt-12">
+    <div class="max-w-[1280px] mx-auto px-6 space-y-10">
+      
+      <!-- Footer Top Columns -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-xs">
+        <!-- Col 1: Brand -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-canvas text-ink font-display text-xs font-bold flex items-center justify-center">h</div>
+            <span class="font-display text-base text-on-dark">hgbord</span>
+          </div>
+          <p class="text-on-dark-soft/70 leading-relaxed">
+            基于 Cal.com 设计规范构建的高效业务与排程控制平台。
+          </p>
+        </div>
+
+        <!-- Col 2: Product -->
+        <div class="space-y-2.5">
+          <div class="font-semibold text-on-dark uppercase tracking-wider text-[11px]">产品功能</div>
+          <ul class="space-y-2">
+            <li><a href="#" class="hover:text-on-dark transition-colors">实时仪表盘</a></li>
+            <li><a href="#" class="hover:text-on-dark transition-colors">智能排程中心</a></li>
+            <li><a href="#" class="hover:text-on-dark transition-colors">自动化集成 (Hooks)</a></li>
+            <li><a href="#" class="hover:text-on-dark transition-colors">数据分析与报表</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Resources -->
+        <div class="space-y-2.5">
+          <div class="font-semibold text-on-dark uppercase tracking-wider text-[11px]">资源与文档</div>
+          <ul class="space-y-2">
+            <li><a href="#" class="hover:text-on-dark transition-colors">设计规范 (DESIGN.md)</a></li>
+            <li><a href="#" class="hover:text-on-dark transition-colors">API 开发手册</a></li>
+            <li><a href="#" class="hover:text-on-dark transition-colors">更新日志 (v0.1)</a></li>
+            <li><a href="#" class="hover:text-on-dark transition-colors">系统架构描述</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Status & Contact -->
+        <div class="space-y-2.5">
+          <div class="font-semibold text-on-dark uppercase tracking-wider text-[11px]">系统服务</div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-surface-dark-elevated text-success text-[11px] font-semibold border border-white/10">
+            <span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+            <span>所有服务正常运行</span>
+          </div>
+          <p class="text-on-dark-soft/70 text-[11px] pt-1">
+            管理员: Ada Lovelace (ada@hgbord.com)
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer Bottom Divider & Copyright -->
+      <div class="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] text-on-dark-soft/60 gap-3">
+        <div>© 2026 hgbord Inc. 保留所有权利。遵照 Cal.com Design System 规范。</div>
+        <div class="flex items-center gap-4">
+          <a href="#" class="hover:text-on-dark transition-colors">隐私政策</a>
+          <a href="#" class="hover:text-on-dark transition-colors">服务条款</a>
+          <a href="#" class="hover:text-on-dark transition-colors">安全合规</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       4. INTERACTIVE MODAL DIALOG ("新建订单 / 预约")
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="modalOverlay" hidden class="fixed inset-0 z-50 bg-primary/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-canvas border border-hairline rounded-lg shadow-modal w-full max-w-md p-6 space-y-5 animate-modal">
+      <div class="flex items-center justify-between pb-3 border-b border-hairline-soft">
+        <h3 class="font-display text-lg text-ink">创建新订单 / 会议预约</h3>
+        <button onclick="closeModal()" class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-surface-soft text-muted hover:text-ink">
+          ✕
+        </button>
+      </div>
+
+      <form onsubmit="handleFormSubmit(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-ink mb-1">客户姓名</label>
+          <input type="text" required placeholder="例如: Ada Lovelace" class="w-full h-9 px-3 bg-canvas border border-hairline rounded-md text-ink focus-ring" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-ink mb-1">电子邮箱</label>
+          <input type="email" required placeholder="ada@example.com" class="w-full h-9 px-3 bg-canvas border border-hairline rounded-md text-ink focus-ring" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-ink mb-1">选择订阅/服务套餐</label>
+          <select class="w-full h-9 px-3 bg-canvas border border-hairline rounded-md text-ink focus-ring font-medium">
+            <option value="Pro">Pro 专业版 (¥2,400 / 年)</option>
+            <option value="Starter">Starter 初创版 (¥480 / 年)</option>
+            <option value="Enterprise">Enterprise 企业版 (定制)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-ink mb-1">预约时段 (可选)</label>
+          <input type="datetime-local" class="w-full h-9 px-3 bg-canvas border border-hairline rounded-md text-ink focus-ring" />
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeModal()" class="h-9 px-4 border border-hairline rounded-md font-semibold text-ink hover:bg-surface-soft">
+            取消
+          </button>
+          <button type="submit" class="h-9 px-4 bg-primary text-white rounded-md font-semibold hover:bg-primary-active">
+            确认创建
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     COMMAND PALETTE (the fluid moment — ⌘K)
-     ═══════════════════════════════════════════════════════════════ -->
-<div id="cmdOverlay" hidden class="fixed inset-0 z-50 flex items-start justify-center pt-[12vh]" style="background:rgba(9,9,11,0.4); backdrop-filter:blur(4px);">
-  <div class="cmd-enter w-[560px] bg-surface-card rounded-xl border border-hairline shadow-overlay overflow-hidden" style="backdrop-filter:blur(12px);">
-    <!-- Input -->
-    <div class="flex items-center gap-3 px-4 h-14 border-b border-hairline-soft">
-      <svg class="w-4 h-4 text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
-      <input id="cmdInput" type="text" placeholder="搜索页面、客户或执行命令…" class="flex-1 bg-transparent outline-none text-[14px] text-ink placeholder:text-muted-soft" />
-      <kbd class="font-mono text-[10px] text-muted-faint bg-surface-soft border border-hairline rounded-xs px-1.5 py-0.5">ESC</kbd>
-    </div>
-    <!-- Results -->
-    <div class="py-2 max-h-[400px] overflow-y-auto">
-      <div class="text-micro text-muted-soft px-4 pt-2 pb-1">页面</div>
-      <button class="cmd-item flex items-center gap-3 w-full h-10 px-4 text-[13px] text-ink hover:bg-accent-faint transition-colors">
-        <svg class="w-4 h-4 text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="3" rx="1"/><rect x="9" y="7" width="5" height="7" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/></svg>
-        <span>前往 仪表盘</span>
-        <kbd class="ml-auto font-mono text-[10px] text-muted-faint">↵</kbd>
-      </button>
-      <button class="cmd-item flex items-center gap-3 w-full h-10 px-4 text-[13px] text-ink bg-accent-faint transition-colors">
-        <svg class="w-4 h-4 text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="2.5"/><path d="M2.5 14c.5-2.8 2.8-4.5 5.5-4.5s5 1.7 5.5 4.5"/></svg>
-        <span>前往 客户</span>
-        <kbd class="ml-auto font-mono text-[10px] text-muted-faint">↵</kbd>
-      </button>
 
-      <div class="text-micro text-muted-soft px-4 pt-3 pb-1">操作</div>
-      <button class="cmd-item flex items-center gap-3 w-full h-10 px-4 text-[13px] text-ink hover:bg-accent-faint transition-colors">
-        <svg class="w-4 h-4 text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
-        <span>新建订单</span>
-        <kbd class="ml-auto font-mono text-[10px] text-muted-faint">N</kbd>
-      </button>
-      <button class="cmd-item flex items-center gap-3 w-full h-10 px-4 text-[13px] text-ink hover:bg-accent-faint transition-colors">
-        <svg class="w-4 h-4 text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5L10 10"/></svg>
-        <span>邀请成员</span>
-      </button>
-    </div>
-    <!-- Footer -->
-    <div class="flex items-center gap-4 px-4 h-9 border-t border-hairline-soft text-[11px] text-muted-soft bg-surface-soft">
-      <span class="flex items-center gap-1"><kbd class="font-mono bg-surface-card border border-hairline rounded-xs px-1">↑↓</kbd> 选择</span>
-      <span class="flex items-center gap-1"><kbd class="font-mono bg-surface-card border border-hairline rounded-xs px-1">↵</kbd> 确认</span>
-      <span class="ml-auto">hgbord · 快速跳转</span>
+  <!-- ═══════════════════════════════════════════════════════════════
+       5. COMMAND PALETTE MODAL (⌘K Quick Navigation)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="cmdOverlay" hidden class="fixed inset-0 z-50 bg-primary/40 backdrop-blur-sm flex items-start justify-center pt-20 p-4">
+    <div class="bg-canvas border border-hairline rounded-lg shadow-modal w-full max-w-lg overflow-hidden animate-modal">
+      
+      <!-- Input Header -->
+      <div class="p-3 border-b border-hairline flex items-center gap-3">
+        <svg class="w-4 h-4 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input id="cmdInput" type="text" onkeyup="filterCmdItems()" placeholder="输入快捷指令或搜索页面 (如: 仪表盘, 预约)..." class="w-full text-sm text-ink bg-transparent border-none outline-none focus:outline-none" />
+        <kbd class="font-mono text-[10px] text-muted bg-surface-soft border border-hairline px-1.5 py-0.5 rounded-xs">ESC</kbd>
+      </div>
+
+      <!-- Action Items List -->
+      <div class="p-2 max-h-72 overflow-y-auto space-y-1 text-xs" id="cmdList">
+        <div class="text-[11px] font-semibold text-muted px-2 py-1 uppercase tracking-wider">快捷跳转</div>
+        <button onclick="executeCmd('tab-dashboard')" class="cmd-item w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-surface-soft text-ink text-left font-medium">
+          <span>📊 前往 仪表盘</span>
+          <kbd class="font-mono text-[10px] text-muted">Enter</kbd>
+        </button>
+        <button onclick="executeCmd('tab-appointments')" class="cmd-item w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-surface-soft text-ink text-left font-medium">
+          <span>📅 前往 预约中心</span>
+          <kbd class="font-mono text-[10px] text-muted">Jump</kbd>
+        </button>
+        <button onclick="executeCmd('tab-customers')" class="cmd-item w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-surface-soft text-ink text-left font-medium">
+          <span>👥 前往 客户管理</span>
+          <kbd class="font-mono text-[10px] text-muted">Jump</kbd>
+        </button>
+
+        <div class="text-[11px] font-semibold text-muted px-2 py-1 pt-2 uppercase tracking-wider">快捷操作</div>
+        <button onclick="executeCmd('new-order')" class="cmd-item w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-surface-soft text-ink text-left font-medium">
+          <span>➕ 新建订单 / 预约</span>
+          <kbd class="font-mono text-[10px] text-muted">Action</kbd>
+        </button>
+        <button onclick="executeCmd('refresh')" class="cmd-item w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-surface-soft text-ink text-left font-medium">
+          <span>🔄 刷新系统指标数据</span>
+          <kbd class="font-mono text-[10px] text-muted">Action</kbd>
+        </button>
+      </div>
+
+      <!-- Footer Hints -->
+      <div class="p-2.5 px-4 bg-surface-soft border-t border-hairline flex items-center justify-between text-[11px] text-muted">
+        <span><kbd class="font-mono">↑↓</kbd> 导航</span>
+        <span><kbd class="font-mono">↵</kbd> 执行</span>
+      </div>
+
     </div>
   </div>
-</div>
 
-<script>
-  // ───── Live wire rail glide ─────
-  // A 2px accent rail that glides vertically to whichever nav item is active.
-  const rail = document.getElementById('navRail');
-  const navItems = document.querySelectorAll('[data-nav]');
-  function setActive(el) {
-    navItems.forEach(n => {
-      // reset to inactive: body-color text, no fill
-      n.classList.remove('nav-item-active');
-      n.style.background = '';
-      n.style.color = '';
-      n.style.fontWeight = '';
-      n.classList.add('text-body');
-      n.classList.remove('text-ink');
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       6. TOAST NOTIFICATION CONTAINER
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       7. INTERACTIVE JAVASCRIPT LOGIC
+       ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    // ───── Tab Switching & Nav Pill Glider Position ─────
+    function initNavGlider() {
+      const activeTab = document.querySelector('.nav-tab.text-ink');
+      const glider = document.getElementById('navGlider');
+      if (activeTab && glider) {
+        glider.style.width = activeTab.offsetWidth + 'px';
+        glider.style.transform = `translateX(${activeTab.offsetLeft}px)`;
+      }
+    }
+
+    function switchTab(tabId, el) {
+      // Update Tab Buttons UI
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.classList.remove('text-ink');
+        btn.classList.add('text-muted');
+      });
+      el.classList.remove('text-muted');
+      el.classList.add('text-ink');
+
+      // Glide Indicator
+      const glider = document.getElementById('navGlider');
+      glider.style.width = el.offsetWidth + 'px';
+      glider.style.transform = `translateX(${el.offsetLeft}px)`;
+
+      // Hide all pages, show target
+      document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+      const targetPage = document.getElementById('tab-' + tabId);
+      if (targetPage) targetPage.classList.remove('hidden');
+
+      showToast('已切换至: ' + el.innerText.trim());
+    }
+
+    window.addEventListener('load', initNavGlider);
+    window.addEventListener('resize', initNavGlider);
+
+    // ───── Interactive Calendar Widget ─────
+    let currentSelectedSlot = '10:30';
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      
+      // Render August 2026 dates (starts on Saturday = index 5 offset)
+      const emptyCells = 5; 
+      for (let i = 0; i < emptyCells; i++) {
+        const span = document.createElement('span');
+        span.className = 'py-2 text-hairline';
+        span.innerText = '';
+        grid.appendChild(span);
+      }
+
+      for (let day = 1; day <= 31; day++) {
+        const btn = document.createElement('button');
+        btn.className = `py-2 rounded-md transition-all ${
+          day === 11 
+            ? 'bg-primary text-white font-bold shadow-subtle' 
+            : 'hover:bg-surface-soft text-ink font-medium'
+        }`;
+        btn.innerText = day;
+        btn.onclick = function() {
+          document.querySelectorAll('#calendarGrid button').forEach(b => {
+            b.className = 'py-2 rounded-md hover:bg-surface-soft text-ink font-medium';
+          });
+          btn.className = 'bg-primary text-white font-bold shadow-subtle py-2 rounded-md';
+          document.getElementById('selectedDateText').innerText = `8月 ${day}日`;
+          showToast(`已选择日期: 8月 ${day}日`);
+        };
+        grid.appendChild(btn);
+      }
+    }
+    renderCalendar();
+
+    function prevMonth() {
+      document.getElementById('calendarMonthLabel').innerText = '2026年 7月';
+      showToast('已加载 2026年 7月 可预订日程');
+    }
+    function nextMonth() {
+      document.getElementById('calendarMonthLabel').innerText = '2026年 9月';
+      showToast('已加载 2026年 9月 可预订日程');
+    }
+
+    function selectSlot(el, slot) {
+      document.querySelectorAll('.slot-btn').forEach(btn => {
+        btn.className = 'slot-btn border border-hairline rounded-md py-2 text-xs font-medium text-ink hover:border-primary hover:bg-surface-soft transition-all';
+      });
+      el.className = 'slot-btn border border-primary bg-primary text-white rounded-md py-2 text-xs font-medium transition-all';
+      currentSelectedSlot = slot;
+      showToast(`已选择时段: ${slot}`);
+    }
+
+    function confirmBooking() {
+      showToast(`成功建立 15 分钟咨询预约 [${currentSelectedSlot}]`);
+    }
+
+    // ───── Integrations Toggle ─────
+    function toggleIntegration(name, input) {
+      const status = input.checked ? '已启用' : '已停用';
+      showToast(`${name} 集成状态: ${status}`);
+    }
+
+    // ───── Global Time Filter ─────
+    function setGlobalTime(range, el) {
+      document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.className = 'time-btn px-3 py-1 rounded-sm hover:text-ink';
+      });
+      el.className = 'time-btn px-3 py-1 rounded-sm text-ink bg-canvas shadow-subtle font-semibold';
+      
+      const mrr = document.getElementById('metric-mrr');
+      if (range === '7d') {
+        if (mrr) mrr.innerText = '¥12,450';
+      } else if (range === '30d') {
+        if (mrr) mrr.innerText = '¥48,210';
+      } else if (range === '12m') {
+        if (mrr) mrr.innerText = '¥578,500';
+      }
+      showToast(`已切换数据周期至: ${range}`);
+    }
+
+    function refreshData() {
+      showToast('数据已与服务器同步 (最新时间: ' + new Date().toLocaleTimeString() + ')');
+    }
+
+    // ───── Table Interactive Filters ─────
+    function filterTable() {
+      const q = document.getElementById('tableSearch').value.toLowerCase();
+      const rows = document.querySelectorAll('#tableBody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    function filterStatus(status) {
+      const rows = document.querySelectorAll('#tableBody tr');
+      rows.forEach(row => {
+        if (status === 'all') {
+          row.style.display = '';
+        } else {
+          const text = row.innerText;
+          if (status === 'active' && text.includes('活跃')) row.style.display = '';
+          else if (status === 'trial' && text.includes('试用')) row.style.display = '';
+          else if (status === 'disabled' && text.includes('停用')) row.style.display = '';
+          else row.style.display = 'none';
+        }
+      });
+      showToast('已应用筛选状态: ' + status);
+    }
+
+    function setDensity(level) {
+      document.querySelectorAll('.density-btn').forEach(b => {
+        b.className = 'density-btn px-2 py-0.5 rounded-xs hover:text-ink';
+      });
+      event.target.className = 'density-btn px-2 py-0.5 rounded-xs text-ink bg-canvas shadow-subtle font-semibold';
+
+      const cells = document.querySelectorAll('#tableBody td, #customerTable th');
+      cells.forEach(cell => {
+        if (level === 'compact') cell.style.padding = '6px 12px';
+        else if (level === 'normal') cell.style.padding = '12px 12px';
+        else if (level === 'loose') cell.style.padding = '18px 12px';
+      });
+      showToast('表格密度模式: ' + level);
+    }
+
+    function toggleSelectAll(master) {
+      document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = master.checked);
+    }
+
+    // ───── Modal Control ─────
+    function openModal() {
+      document.getElementById('modalOverlay').hidden = false;
+    }
+    function closeModal() {
+      document.getElementById('modalOverlay').hidden = true;
+    }
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      closeModal();
+      showToast('🎉 新订单/预约处理成功!');
+    }
+
+    // ───── Command Palette (⌘K) ─────
+    function openCmd() {
+      const overlay = document.getElementById('cmdOverlay');
+      overlay.hidden = false;
+      setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+    }
+    function closeCmd() {
+      document.getElementById('cmdOverlay').hidden = true;
+    }
+
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const overlay = document.getElementById('cmdOverlay');
+        overlay.hidden ? openCmd() : closeCmd();
+      }
+      if (e.key === 'Escape') {
+        closeModal();
+        closeCmd();
+      }
     });
-    // activate: ink-black text (bold) + soft blue tint fill
-    el.classList.add('nav-item-active');
-    el.classList.remove('text-body');
-    el.classList.add('text-ink');
-    el.style.background = '#EFF4FF';
-    el.style.color = '#0A0A0B';
-    el.style.fontWeight = '600';
-    // glide the rail
-    const listRect = document.getElementById('navList').getBoundingClientRect();
-    const itemRect = el.getBoundingClientRect();
-    const y = itemRect.top - listRect.top + (itemRect.height - 24) / 2;
-    rail.style.transform = `translateY(${y}px)`;
-  }
-  navItems.forEach(item => {
-    item.addEventListener('click', e => { e.preventDefault(); setActive(item); });
-  });
-  // initial position once layout is ready
-  window.addEventListener('load', () => {
-    const active = document.querySelector('.nav-item-active') || navItems[0];
-    setActive(active);
-  });
 
-  // ───── Command palette ─────
-  const overlay = document.getElementById('cmdOverlay');
-  const cmdInput = document.getElementById('cmdInput');
-  function openCmd() {
-    overlay.hidden = false;
-    setTimeout(() => cmdInput.focus(), 30);
-  }
-  function closeCmd() {
-    overlay.hidden = true;
-    cmdInput.value = '';
-  }
-  document.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); overlay.hidden ? openCmd() : closeCmd(); }
-    if (e.key === 'Escape' && !overlay.hidden) closeCmd();
-  });
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeCmd(); });
-  // keyboard nav inside palette
-  document.querySelectorAll('.cmd-item').forEach(b => {
-    b.addEventListener('click', () => closeCmd());
-  });
-</script>
+    function filterCmdItems() {
+      const q = document.getElementById('cmdInput').value.toLowerCase();
+      document.querySelectorAll('.cmd-item').forEach(item => {
+        item.style.display = item.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+      });
+    }
+
+    function executeCmd(type) {
+      closeCmd();
+      if (type === 'new-order') openModal();
+      else if (type === 'refresh') refreshData();
+      else if (type.startsWith('tab-')) {
+        const tabName = type.replace('tab-', '');
+        const btn = Array.from(document.querySelectorAll('.nav-tab')).find(b => b.getAttribute('onclick').includes(tabName));
+        if (btn) btn.click();
+      }
+    }
+
+    // ───── Toast System ─────
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto bg-primary text-white text-xs font-semibold px-4 py-2.5 rounded-md shadow-modal flex items-center gap-2 animate-toast';
+      toast.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-badge-emerald"></span><span>${msg}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        toast.style.transition = 'all 200ms ease';
+        setTimeout(() => toast.remove(), 200);
+      }, 2500);
+    }
+  </script>
 
 </body>
 </html>

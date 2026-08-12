@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 // hgbord 全局唯一 Prisma schema
 // ═══════════════════════════════════════════════════════════
-// 数据库：PostgreSQL（docker compose up -d 启动）
+// 数据库：SQLite（本地开发零配置；后续可迁 PostgreSQL）
 // 枚举仍用 String（原型阶段 YAGNI，且方便跨 SQLite/PG 迁移）
 // ═══════════════════════════════════════════════════════════
 
@@ -10,7 +10,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -35,14 +35,14 @@ model User {
 }
 
 // ────────────────────────────────────────────────────────────
-// 表单域 —— 动态 Schema（FormSubmission.data 存 JSON，加字段不用改表）
+// 表单域 —— 动态 Schema（SQLite 不支持 Json，改为字符串存 JSON）
 // ────────────────────────────────────────────────────────────
 
 model Form {
   id          String           @id @default(cuid())
   title       String
   description String?
-  schema      Json             // FormField[] 字段定义（id/title/type/group/unit/precision/options）
+  schema      String           // JSON 字符串：FormField[] 字段定义
   status      String           @default("published") // draft / published / closed
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -55,7 +55,7 @@ model FormSubmission {
   id          String   @id @default(cuid())
   form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId      String
-  data        Json     // { field_date: "2026-08-11", tank_98-1: 82.5, ... }
+  data        String   // JSON 字符串：{ field_date: "2026-08-11", tank_98-1: 82.5, ... }
   submitterIp String?
   createdAt   DateTime @default(now())
 

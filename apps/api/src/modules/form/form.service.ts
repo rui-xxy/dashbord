@@ -14,6 +14,10 @@ import { toFormVo, toSubmissionVo } from './form.mapper';
 export class FormService {
   constructor(private readonly prisma: PrismaClient) {}
 
+  private serializeSubmissionData(data: SubmissionData) {
+    return JSON.stringify(data);
+  }
+
   // ═══════════════════════════════════════════════════════════
   // Form CRUD（管理端）
   // ═══════════════════════════════════════════════════════════
@@ -22,7 +26,7 @@ export class FormService {
   async list(q: FormPaginationQuery) {
     const { page, pageSize, search } = q;
     const where: Prisma.FormWhereInput = search
-      ? { title: { contains: search, mode: 'insensitive' } }
+      ? { title: { contains: search } }
       : {};
     const [items, total] = await this.prisma.$transaction([
       this.prisma.form.findMany({
@@ -111,7 +115,7 @@ export class FormService {
   async createSubmission(formId: string, dto: CreateSubmissionDto, ip?: string) {
     await this.getFormOrThrow(formId);
     const sub = await this.prisma.formSubmission.create({
-      data: { formId, data: dto.data as Prisma.InputJsonValue, submitterIp: ip ?? null },
+      data: { formId, data: this.serializeSubmissionData(dto.data), submitterIp: ip ?? null },
     });
     return toSubmissionVo(sub);
   }
@@ -122,7 +126,7 @@ export class FormService {
     if (!existing) throw Errors.notFound('记录不存在');
     const sub = await this.prisma.formSubmission.update({
       where: { id },
-      data: { data: dto.data as Prisma.InputJsonValue },
+      data: { data: this.serializeSubmissionData(dto.data) },
     });
     return toSubmissionVo(sub);
   }
@@ -152,7 +156,7 @@ export class FormService {
         await tx.formSubmission.createMany({
           data: created.map((c) => ({
             formId,
-            data: c.data as Prisma.InputJsonValue,
+            data: this.serializeSubmissionData(c.data),
           })),
         });
       }
@@ -160,7 +164,7 @@ export class FormService {
       for (const u of updated) {
         await tx.formSubmission.updateMany({
           where: { id: u.id, formId }, // formId 约束防止跨表单越权改
-          data: { data: u.data as Prisma.InputJsonValue },
+          data: { data: this.serializeSubmissionData(u.data) },
         });
       }
       // 删除（约束 formId）

@@ -38,6 +38,9 @@ interface DataSheetProps {
 
 const ROW_NO_W = 48; // 行号列固定宽度（px），冻结列 left 偏移基准
 const FROZEN_COLS = 1; // 冻结前 N 列（field_date）
+const ACTION_COL_W = 48; // 删除按钮列宽
+const DEFAULT_COL_W = 100;
+const DATE_COL_W = 128;
 
 /** 父组件传入的提交记录格式（FormSubmissionVo 精简版） */
 interface SubmissionInput {
@@ -102,6 +105,11 @@ function computeGroups(schema: FormSchema): ColumnGroup[] {
   return groups;
 }
 
+function getColumnWidth(field: FormField): number {
+  if (field.type === 'date') return DATE_COL_W;
+  return field.width ?? DEFAULT_COL_W;
+}
+
 export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
   const [rows, setRows] = useState<InternalRow[]>(() => hydrate(submissions));
   const [deleted, setDeleted] = useState<string[]>([]);
@@ -117,6 +125,11 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
   const submissionsRef = useRef(submissions);
 
   const groups = useMemo(() => computeGroups(schema), [schema]);
+  const columnWidths = useMemo(() => schema.map(getColumnWidth), [schema]);
+  const tableMinWidth = useMemo(
+    () => ROW_NO_W + ACTION_COL_W + columnWidths.reduce((sum, width) => sum + width, 0),
+    [columnWidths],
+  );
 
   // 每个字段所属分组的索引 —— 用于交替底色（奇数组 #F8F9FA，偶数组 #FFFFFF）
   const fieldGroupIdx = useMemo(() => {
@@ -264,7 +277,8 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
         if (isInput) {
           const { selectionStart: s, selectionEnd: en, value } = target;
           const hasSelection = s !== en;
-          if (hasSelection) return; // 选中文本时不跳
+          const isFullSelection = s === 0 && en === value.length;
+          if (hasSelection && !isFullSelection) return; // 局部选中文本时不跳；整格全选仍允许导航
           if (key === 'ArrowLeft' && s !== 0) return; // 不在最左
           if (key === 'ArrowRight' && en !== value.length) return; // 不在最右
         }
@@ -404,7 +418,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
 
       {/* 表格区 —— 横向 + 纵向滚动；分组双行表头 + 冻结首列 */}
       <div ref={scrollRef} className="overflow-auto max-h-[calc(100vh-300px)]">
-        <table className="border-separate border-spacing-0" style={{ minWidth: schema.length * 100 }}>
+        <table className="border-separate border-spacing-0" style={{ minWidth: tableMinWidth }}>
           <thead className="sticky top-0 z-20">
             {/* 第一行：分组 */}
             <tr>
@@ -435,6 +449,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                 const isFrozen = i < FROZEN_COLS;
                 const left = isFrozen ? ROW_NO_W : undefined;
                 const gIdx = fieldGroupIdx[i];
+                const width = columnWidths[i];
                 return (
                   <th
                     key={f.id}
@@ -445,7 +460,9 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                     )}
                     style={{
                       ...(left !== undefined ? { left } : {}),
-                      ...(f.width ? { width: f.width, minWidth: f.width } : {}),
+                      width,
+                      minWidth: width,
+                      maxWidth: width,
                     }}
                   >
                     <span className="inline-flex items-baseline gap-0.5">
@@ -485,6 +502,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                   const isFrozen = colIdx < FROZEN_COLS;
                   const isNumber = field.type === 'number';
                   const gIdx = fieldGroupIdx[colIdx];
+                  const width = columnWidths[colIdx];
                   // 非法数字（编辑中）的红框提示
                   const invalidNumber = isEditing && isNumber && !isValidNumber(draft);
                   return (
@@ -503,7 +521,12 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                         // 编辑态提升层级避免被表头/相邻列盖住
                         isEditing && 'z-30',
                       )}
-                      style={isFrozen ? { left: ROW_NO_W } : undefined}
+                      style={{
+                        ...(isFrozen ? { left: ROW_NO_W } : {}),
+                        width,
+                        minWidth: width,
+                        maxWidth: width,
+                      }}
                     >
                       {isEditing ? (
                         field.type === 'select' ? (
@@ -516,7 +539,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                             onBlur={() => handleBlur(rowIdx, colIdx)}
                             onKeyDown={onKeyDown}
                             className={cn(
-                              'absolute inset-0 px-2.5 text-[14px] text-ink bg-transparent text-center',
+                              'absolute inset-1 rounded-md px-2 text-[14px] text-ink bg-canvas text-center',
                               'border border-hairline focus:outline-none',
                             )}
                             style={{
@@ -546,10 +569,10 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                               onBlur={() => handleBlur(rowIdx, colIdx)}
                               onKeyDown={onKeyDown}
                               className={cn(
-                                'absolute inset-0 px-2.5 text-[14px] text-ink bg-transparent text-center',
+                                'absolute inset-1 rounded-md px-2 text-[14px] text-ink bg-canvas text-center',
                                 isNumber && 'tnum',
                                 // 日期字段右侧留空给日历图标
-                                field.type === 'date' ? 'pr-7' : '',
+                                field.type === 'date' ? 'pr-8 text-[13px]' : '',
                                 'border border-hairline focus:outline-none',
                               )}
                               style={{
@@ -560,7 +583,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                               }}
                             />
                             {field.type === 'date' && (
-                              <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10">
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
                                 <DatePicker
                                   value={draft}
                                   onChange={(v) => setDraft(v)}

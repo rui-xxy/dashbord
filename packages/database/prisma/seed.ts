@@ -12,6 +12,18 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+function stringifyJson(value: unknown) {
+  return JSON.stringify(value);
+}
+
+function parseJson<T>(value: string, fallback: T): T {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════
 // 硫酸车间报表 Schema —— 对齐 b2-source form 6 真实字段
 // ═══════════════════════════════════════════════════════════
@@ -137,7 +149,7 @@ async function seedSulfuricForm() {
       data: {
         title,
         description: '每日生产数据填报',
-        schema: SULFURIC_SCHEMA,
+        schema: stringifyJson(SULFURIC_SCHEMA),
         status: 'published',
       },
     });
@@ -145,7 +157,7 @@ async function seedSulfuricForm() {
   } else {
     form = await prisma.form.update({
       where: { id: form.id },
-      data: { schema: SULFURIC_SCHEMA, description: '每日生产数据填报' },
+      data: { schema: stringifyJson(SULFURIC_SCHEMA), description: '每日生产数据填报' },
     });
     console.log(`  ✓  表单 schema 已更新: ${form.id}`);
   }
@@ -158,12 +170,12 @@ async function seedSulfuricForm() {
         select: { data: true },
       })
     )
-      .map((s) => (s.data as Record<string, unknown>).field_date as string)
+      .map((s) => parseJson<Record<string, unknown>>(s.data, {}).field_date as string)
       .filter(Boolean),
   );
 
   const DAYS = 30;
-  const toCreate: Array<{ formId: string; data: Record<string, string | number | null>; createdAt: Date }> = [];
+  const toCreate: Array<{ formId: string; data: string; createdAt: Date }> = [];
   for (let i = 0; i < DAYS; i++) {
     const data = genSubmissionData(i);
     const dateStr = data.field_date as string;
@@ -172,7 +184,7 @@ async function seedSulfuricForm() {
     const created = new Date();
     created.setDate(created.getDate() - i);
     created.setHours(18, 30, 0, 0);
-    toCreate.push({ formId: form.id, data, createdAt: created });
+    toCreate.push({ formId: form.id, data: stringifyJson(data), createdAt: created });
   }
 
   if (toCreate.length > 0) {
