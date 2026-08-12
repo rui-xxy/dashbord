@@ -107,6 +107,16 @@ export class FormController {
     return this.forms.listRecentSubmissions(id);
   }
 
+  /** 公开提交记录列表（填报页显示表内最新值参考） */
+  @Public()
+  @Get('public/:id/submissions')
+  publicSubmissions(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(FormPaginationQuery)) q: FormPaginationQuery,
+  ) {
+    return this.forms.listPublicSubmissions(id, q);
+  }
+
   /** 公开提交（匿名，记录 IP） */
   @Public()
   @Post('public/:id/submit')

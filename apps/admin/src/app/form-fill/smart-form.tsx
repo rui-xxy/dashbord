@@ -4,11 +4,9 @@
  *
  * 布局（100vh 固定，类手机 App）：
  * - 头部：表单标题 + 今天日期
- * - nav-pill-group tabs：储罐液位 / 仪表读数（按 group 分），活动段白底 pill
+ * - nav-pill-group tabs：按 group 分，横向可滑；停车记录单独成页
  * - 内容区独立滚动：每行三段式「字段名 | 上次值 | 输入框」
  * - 底部吸底：确认并提交 (n/m)，全填完才启用
- *
- * 停车记录：作为仪表读数 tab 底部的附加卡片（不再单独成 tab）。
  */
 import { useMemo, useState } from 'react';
 import { Check } from 'lucide-react';
@@ -28,6 +26,7 @@ interface TabPage {
   id: string;
   title: string;
   fields: FormField[];
+  type: 'fields' | 'parking';
 }
 
 function groupToTabs(schema: FormSchema): TabPage[] {
@@ -38,8 +37,9 @@ function groupToTabs(schema: FormSchema): TabPage[] {
     const g = f.group ?? '其他';
     const last = tabs[tabs.length - 1];
     if (last && last.title === g) last.fields.push(f);
-    else tabs.push({ id: g, title: g, fields: [f] });
+    else tabs.push({ id: g, title: g, fields: [f], type: 'fields' });
   });
+  tabs.push({ id: 'parking', title: '停车记录', fields: [], type: 'parking' });
   return tabs;
 }
 
@@ -52,12 +52,27 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function toComparableDate(value?: string | null): number {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  // 优先按业务日期 field_date 比较；格式应为 YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return Number(value.replaceAll('-', ''));
+  }
+  const ts = new Date(value).getTime();
+  return Number.isNaN(ts) ? Number.NEGATIVE_INFINITY : ts;
+}
+
 function buildLastValues(recent: FormSubmissionVo[]): Record<string, { value: string | number | null; date: string }> {
   const map: Record<string, { value: string | number | null; date: string }> = {};
   const allFields = new Set<string>();
   recent.forEach((s) => Object.keys(s.data).forEach((k) => allFields.add(k)));
+  const byBusinessDateDesc = [...recent].sort((a, b) => {
+    const aDate = (a.data.field_date as string | undefined) ?? a.createdAt;
+    const bDate = (b.data.field_date as string | undefined) ?? b.createdAt;
+    return toComparableDate(bDate) - toComparableDate(aDate);
+  });
   for (const fid of allFields) {
-    for (const s of recent) {
+    for (const s of byBusinessDateDesc) {
       const v = s.data[fid];
       if (v !== undefined && v !== null && v !== '') {
         const businessDate = (s.data.field_date as string) || s.createdAt;
@@ -75,13 +90,23 @@ function formatLastDate(iso: string): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-type ParkingRecord = { start: string; end: string; reason: string };
+type ParkingRecord = {
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  reason: string;
+};
+
+function createEmptyParkingRecord(date = ''): ParkingRecord {
+  return { startDate: date, startTime: '', endDate: date, endTime: '', reason: '' };
+}
 
 export function SmartForm({ title, schema, recent, onSubmit, submitting }: SmartFormProps) {
   const tabs = useMemo(() => groupToTabs(schema), [schema]);
   const [activeTabId, setActiveTabId] = useState(tabs[0]?.id ?? '');
   const [values, setValues] = useState<Record<string, string>>({});
-  const [parkings, setParkings] = useState<ParkingRecord[]>([{ start: '', end: '', reason: '' }]);
+  const [parkings, setParkings] = useState<ParkingRecord[]>([createEmptyParkingRecord(todayStr())]);
   const [submitted, setSubmitted] = useState(false);
 
   const lastValues = useMemo(() => buildLastValues(recent), [recent]);
@@ -111,7 +136,13 @@ export function SmartForm({ title, schema, recent, onSubmit, submitting }: Smart
       data[f.id] = v === undefined || v === '' ? null : Number(v);
     });
     // 停车记录（过滤空）
-    const validParking = parkings.filter((r) => r.start || r.end || r.reason);
+    const validParking = parkings
+      .map((record) => ({
+        start: record.startDate && record.startTime ? `${record.startDate}T${record.startTime}` : '',
+        end: record.endDate && record.endTime ? `${record.endDate}T${record.endTime}` : '',
+        reason: record.reason.trim(),
+      }))
+      .filter((record) => record.start || record.end || record.reason);
     if (validParking.length > 0) {
       data.parkingRecords = JSON.stringify(validParking);
     }
@@ -140,7 +171,10 @@ export function SmartForm({ title, schema, recent, onSubmit, submitting }: Smart
   }
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0];
-  const unfilledOf = (tab: TabPage) => tab.fields.filter((f) => !values[f.id]).length;
+  const unfilledOf = (tab: TabPage) => {
+    if (tab.type === 'parking') return 0;
+    return tab.fields.filter((f) => !values[f.id]).length;
+  };
 
   return (
     <div className="flex justify-center bg-surface-soft" style={{ height: '100vh', overflow: 'hidden' }}>
@@ -155,7 +189,8 @@ export function SmartForm({ title, schema, recent, onSubmit, submitting }: Smart
 
         {/* ── nav-pill-group tabs ── */}
         <div className="shrink-0 px-4 py-2.5 border-b border-hairline-soft">
-          <div className="flex gap-1 bg-surface-soft rounded-md p-1">
+          <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="inline-flex min-w-full gap-1 bg-surface-soft rounded-md p-1">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTabId;
               const unfilled = unfilledOf(tab);
@@ -164,7 +199,7 @@ export function SmartForm({ title, schema, recent, onSubmit, submitting }: Smart
                   key={tab.id}
                   onClick={() => setActiveTabId(tab.id)}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 h-8 rounded-xs text-[13px] font-semibold transition-all duration-120 ease-out-expo',
+                    'shrink-0 flex items-center justify-center gap-1.5 h-8 rounded-xs text-[13px] font-semibold transition-all duration-120 ease-out-expo whitespace-nowrap px-3',
                     isActive
                       ? 'bg-surface-panel text-ink shadow-lift'
                       : 'text-muted hover:text-ink',
@@ -185,11 +220,12 @@ export function SmartForm({ title, schema, recent, onSubmit, submitting }: Smart
               );
             })}
           </div>
+          </div>
         </div>
 
         {/* ── 内容区（独立滚动）── */}
         <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {activeTab?.fields.map((field, idx) => {
+          {activeTab?.type === 'fields' && activeTab.fields.map((field) => {
             const v = values[field.id] ?? '';
             const hasChange = v !== '';
             const last = lastValues[field.id];
@@ -248,10 +284,10 @@ export function SmartForm({ title, schema, recent, onSubmit, submitting }: Smart
             );
           })}
 
-          {/* 停车记录卡片 —— 只在最后一个 tab（仪表读数）底部显示 */}
-          {activeTab === tabs[tabs.length - 1] && (
+          {activeTab?.type === 'parking' && (
             <div className="px-5 py-4">
               <div className="text-[11px] font-bold text-muted-soft uppercase tracking-wider mb-2">停车记录（可选）</div>
+              <p className="text-[12px] text-muted mb-3">如当班存在停车、检修或切换，请单独记录时间和原因。</p>
               {parkings.map((p, i) => (
                 <div key={i} className="bg-surface-soft border border-hairline-soft rounded-md p-3 mb-2">
                   <div className="flex items-center justify-between mb-2">
@@ -264,22 +300,58 @@ export function SmartForm({ title, schema, recent, onSubmit, submitting }: Smart
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[10px] text-muted-soft mb-1">开始</label>
-                      <input type="datetime-local" value={p.start} onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, start: e.target.value } : r)))} className="bloom h-8 w-full px-2 text-[12px] text-ink bg-canvas border border-hairline rounded-xs" />
+                      <label className="block text-[10px] text-muted-soft mb-1">开始日期</label>
+                      <input
+                        type="date"
+                        value={p.startDate}
+                        onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, startDate: e.target.value } : r)))}
+                        className="bloom h-9 w-full px-2.5 text-[12px] text-ink bg-canvas border border-hairline rounded-md"
+                      />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-muted-soft mb-1">结束</label>
-                      <input type="datetime-local" value={p.end} onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, end: e.target.value } : r)))} className="bloom h-8 w-full px-2 text-[12px] text-ink bg-canvas border border-hairline rounded-xs" />
+                      <label className="block text-[10px] text-muted-soft mb-1">开始时间</label>
+                      <input
+                        type="time"
+                        value={p.startTime}
+                        onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, startTime: e.target.value } : r)))}
+                        className="bloom h-9 w-full px-2.5 text-[12px] text-ink bg-canvas border border-hairline rounded-md"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div>
+                      <label className="block text-[10px] text-muted-soft mb-1">结束日期</label>
+                      <input
+                        type="date"
+                        value={p.endDate}
+                        onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, endDate: e.target.value } : r)))}
+                        className="bloom h-9 w-full px-2.5 text-[12px] text-ink bg-canvas border border-hairline rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-muted-soft mb-1">结束时间</label>
+                      <input
+                        type="time"
+                        value={p.endTime}
+                        onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, endTime: e.target.value } : r)))}
+                        className="bloom h-9 w-full px-2.5 text-[12px] text-ink bg-canvas border border-hairline rounded-md"
+                      />
                     </div>
                   </div>
                   <div className="mt-2">
                     <label className="block text-[10px] text-muted-soft mb-1">原因</label>
-                    <input type="text" placeholder="请输入停车原因" value={p.reason} onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, reason: e.target.value } : r)))} className="bloom h-8 w-full px-2 text-[12px] text-ink bg-canvas border border-hairline rounded-xs" />
+                    <input
+                      type="text"
+                      placeholder="请输入停车原因"
+                      value={p.reason}
+                      onChange={(e) => setParkings((prev) => prev.map((r, idx) => (idx === i ? { ...r, reason: e.target.value } : r)))}
+                      className="bloom h-9 w-full px-2.5 text-[12px] text-ink bg-canvas border border-hairline rounded-md"
+                    />
                   </div>
                 </div>
               ))}
               <button
-                onClick={() => setParkings((prev) => [...prev, { start: '', end: '', reason: '' }])}
+                onClick={() => setParkings((prev) => [...prev, createEmptyParkingRecord(todayStr())])}
                 className="w-full h-8 border border-dashed border-hairline rounded-md text-[12px] text-muted hover:text-ink hover:border-ink transition-colors duration-120 ease-out-expo"
               >
                 + 新增停车记录

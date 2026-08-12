@@ -16,6 +16,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Undo2, Download, Save, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/cn';
 import { api } from '@/lib/api';
 import { DatePicker } from './date-picker';
@@ -28,6 +29,7 @@ interface InternalRow {
   _id?: string;
   _state: 'saved' | 'created' | 'updated';
   data: RowData;
+  originalData?: RowData;
 }
 
 interface DataSheetProps {
@@ -39,6 +41,7 @@ interface DataSheetProps {
 const ROW_NO_W = 48; // 行号列固定宽度（px），冻结列 left 偏移基准
 const FROZEN_COLS = 1; // 冻结前 N 列（field_date）
 const ACTION_COL_W = 48; // 删除按钮列宽
+const PARKING_COL_W = 118; // 停车记录列宽
 const DEFAULT_COL_W = 100;
 const DATE_COL_W = 128;
 const CELL_SCROLL_GAP = 8; // 活动单元格与可视边界保留一点呼吸空间
@@ -50,8 +53,12 @@ interface SubmissionInput {
   createdAt: string;
 }
 
-function hydrate(submissions: SubmissionInput[]): InternalRow[] {
-  return submissions.map((s) => ({ _id: s.id, _state: 'saved' as const, data: { ...s.data } }));
+interface ParkingRecordDraft {
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  reason: string;
 }
 
 /** 去掉 null（后端 JSON 不需要 null 占位） */
@@ -111,12 +118,137 @@ function getColumnWidth(field: FormField): number {
   return field.width ?? DEFAULT_COL_W;
 }
 
+function normalizeCellValue(field: FormField, value: CellValue): CellValue {
+  if (value === null || value === undefined || value === '') {
+    return field.type === 'number' ? null : '';
+  }
+  if (field.type === 'number') {
+    const num = typeof value === 'number' ? value : Number(String(value).trim());
+    if (Number.isNaN(num)) return null;
+    return field.precision ? +num.toFixed(field.precision) : num;
+  }
+  return String(value);
+}
+
+function normalizeExtraValue(value: CellValue): CellValue {
+  return value ?? '';
+}
+
+function toDatePart(value: string, fallbackDate = '') {
+  if (!value) return fallbackDate;
+  if (value.includes('T')) return value.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  return fallbackDate;
+}
+
+function toTimePart(value: string) {
+  if (!value) return '';
+  if (value.includes('T')) return value.slice(11, 16);
+  const match = value.match(/\b(\d{2}:\d{2})\b/);
+  return match?.[1] ?? '';
+}
+
+function parseParkingRecords(value: CellValue, fallbackDate = ''): ParkingRecordDraft[] {
+  if (!value || typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item) => ({
+      startDate: toDatePart(String(item?.start ?? ''), fallbackDate),
+      startTime: toTimePart(String(item?.start ?? '')),
+      endDate: toDatePart(String(item?.end ?? item?.start ?? ''), fallbackDate),
+      endTime: toTimePart(String(item?.end ?? '')),
+      reason: String(item?.reason ?? ''),
+    }));
+  } catch {
+    const match = value.match(/(\d{2}:\d{2})~(\d{2}:\d{2})\s*(.*)/);
+    if (!match) return [{ startDate: fallbackDate, startTime: '', endDate: fallbackDate, endTime: '', reason: value }];
+    return [{
+      startDate: fallbackDate,
+      startTime: match[1],
+      endDate: fallbackDate,
+      endTime: match[2],
+      reason: match[3] ?? '',
+    }];
+  }
+}
+
+function serializeParkingRecords(records: ParkingRecordDraft[]): string {
+  const normalized = records
+    .map((record) => ({
+      start: record.startDate && record.startTime ? `${record.startDate}T${record.startTime}` : '',
+      end: record.endDate && record.endTime ? `${record.endDate}T${record.endTime}` : '',
+      reason: record.reason.trim(),
+    }))
+    .filter((record) => record.start || record.end || record.reason);
+  return normalized.length > 0 ? JSON.stringify(normalized) : '';
+}
+
+function createEmptyParkingRecord(date = ''): ParkingRecordDraft {
+  return { startDate: date, startTime: '', endDate: date, endTime: '', reason: '' };
+}
+
+function hydrate(schema: FormSchema, submissions: SubmissionInput[]): InternalRow[] {
+  const schemaFields = new Set(schema.map((field) => field.id));
+  return submissions.map((s) => ({
+    _id: s.id,
+    _state: 'saved' as const,
+    data: {
+      ...Object.fromEntries(
+        schema.map((field) => [field.id, normalizeCellValue(field, s.data[field.id] ?? null)]),
+      ),
+      ...Object.fromEntries(
+        Object.entries(s.data)
+          .filter(([key]) => !schemaFields.has(key))
+          .map(([key, value]) => [key, normalizeExtraValue(value)]),
+      ),
+    },
+    originalData: {
+      ...Object.fromEntries(
+        schema.map((field) => [field.id, normalizeCellValue(field, s.data[field.id] ?? null)]),
+      ),
+      ...Object.fromEntries(
+        Object.entries(s.data)
+          .filter(([key]) => !schemaFields.has(key))
+          .map(([key, value]) => [key, normalizeExtraValue(value)]),
+      ),
+    },
+  }));
+}
+
+function isCellChanged(row: InternalRow, field: FormField): boolean {
+  if (row._state === 'created') {
+    const value = normalizeCellValue(field, row.data[field.id] ?? null);
+    return value !== null && value !== '';
+  }
+  if (!row.originalData) return false;
+  return normalizeCellValue(field, row.data[field.id] ?? null) !== normalizeCellValue(field, row.originalData[field.id] ?? null);
+}
+
+function getRowState(row: InternalRow, schema: FormSchema): InternalRow['_state'] {
+  if (row._state === 'created' && !row._id) return 'created';
+  const fieldMap = new Map(schema.map((field) => [field.id, field]));
+  const keys = new Set([...Object.keys(row.data), ...Object.keys(row.originalData ?? {})]);
+  for (const key of keys) {
+    const field = fieldMap.get(key);
+    const current = field
+      ? normalizeCellValue(field, row.data[key] ?? null)
+      : normalizeExtraValue(row.data[key] ?? null);
+    const original = field
+      ? normalizeCellValue(field, row.originalData?.[key] ?? null)
+      : normalizeExtraValue(row.originalData?.[key] ?? null);
+    if (current !== original) return 'updated';
+  }
+  return 'saved';
+}
+
 export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
-  const [rows, setRows] = useState<InternalRow[]>(() => hydrate(submissions));
+  const [rows, setRows] = useState<InternalRow[]>(() => hydrate(schema, submissions));
   const [deleted, setDeleted] = useState<string[]>([]);
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
   const [draft, setDraft] = useState<string>('');
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [parkingEditor, setParkingEditor] = useState<{ rowIdx: number; records: ParkingRecordDraft[] } | null>(null);
 
   const inputRef = useRef<HTMLInputElement | HTMLSelectElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -132,7 +264,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
     [columnWidths],
   );
   const tableMinWidth = useMemo(
-    () => ROW_NO_W + ACTION_COL_W + columnWidths.reduce((sum, width) => sum + width, 0),
+    () => ROW_NO_W + PARKING_COL_W + ACTION_COL_W + columnWidths.reduce((sum, width) => sum + width, 0),
     [columnWidths],
   );
 
@@ -166,10 +298,13 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
         prev.map((r, i) => {
           if (i !== rowIdx) return r;
           if (r.data[field.id] === v) return r;
-          return {
+          const nextRow: InternalRow = {
             ...r,
             data: { ...r.data, [field.id]: v },
-            _state: r._state === 'created' ? 'created' : 'updated',
+          };
+          return {
+            ...nextRow,
+            _state: getRowState(nextRow, schema),
           };
         }),
       );
@@ -338,7 +473,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
     schema.forEach((f) => {
       empty[f.id] = f.type === 'number' ? null : '';
     });
-    setRows((prev) => [{ _state: 'created' as const, data: empty }, ...prev]);
+    setRows((prev) => [{ _state: 'created' as const, data: empty, originalData: { ...empty } }, ...prev]);
     // 滚动到顶部让新行可见
     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     // 等下一帧 DOM 挂载后再 enterEdit
@@ -379,10 +514,11 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
   }, [rows, deleted, saveMut]);
 
   const reset = useCallback(() => {
-    setRows(hydrate(submissionsRef.current));
+    setRows(hydrate(schema, submissionsRef.current));
     setDeleted([]);
     setEditing(null);
-  }, []);
+    setParkingEditor(null);
+  }, [schema]);
 
   // ── 导出 CSV ──
   const exportCsv = useCallback(() => {
@@ -409,10 +545,61 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
   useEffect(() => {
     if (submissionsRef.current === submissions) return;
     submissionsRef.current = submissions;
-    setRows(hydrate(submissions));
+    setRows(hydrate(schema, submissions));
     setDeleted([]);
     setEditing(null);
-  }, [submissions]);
+    setParkingEditor(null);
+  }, [schema, submissions]);
+
+  const openParkingEditor = useCallback((rowIdx: number) => {
+    const row = rows[rowIdx];
+    if (!row) return;
+    const fallbackDate = typeof row.data.field_date === 'string' ? row.data.field_date : '';
+    const parsed = parseParkingRecords(row.data.parkingRecords ?? '', fallbackDate);
+    setParkingEditor({ rowIdx, records: parsed.length > 0 ? parsed : [createEmptyParkingRecord(fallbackDate)] });
+  }, [rows]);
+
+  const updateParkingRecord = useCallback((recordIdx: number, patch: Partial<ParkingRecordDraft>) => {
+    setParkingEditor((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        records: prev.records.map((record, idx) => (idx === recordIdx ? { ...record, ...patch } : record)),
+      };
+    });
+  }, []);
+
+  const addParkingRecord = useCallback(() => {
+    setParkingEditor((prev) => {
+      if (!prev) return prev;
+      const fallbackDate = prev.records[prev.records.length - 1]?.date ?? '';
+      return { ...prev, records: [...prev.records, createEmptyParkingRecord(fallbackDate)] };
+    });
+  }, []);
+
+  const removeParkingRecord = useCallback((recordIdx: number) => {
+    setParkingEditor((prev) => {
+      if (!prev) return prev;
+      const nextRecords = prev.records.filter((_, idx) => idx !== recordIdx);
+      return { ...prev, records: nextRecords.length > 0 ? nextRecords : [createEmptyParkingRecord()] };
+    });
+  }, []);
+
+  const saveParkingRecords = useCallback(() => {
+    if (!parkingEditor) return;
+    const nextValue = serializeParkingRecords(parkingEditor.records);
+    setRows((prev) =>
+      prev.map((row, idx) => {
+        if (idx !== parkingEditor.rowIdx) return row;
+        const nextRow: InternalRow = {
+          ...row,
+          data: { ...row.data, parkingRecords: nextValue },
+        };
+        return { ...nextRow, _state: getRowState(nextRow, schema) };
+      }),
+    );
+    setParkingEditor(null);
+  }, [parkingEditor, schema]);
 
   return (
     <div>
@@ -474,6 +661,13 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                   {g.count > 1 ? g.name : ''}
                 </th>
               ))}
+              <th
+                rowSpan={2}
+                style={{ width: PARKING_COL_W, minWidth: PARKING_COL_W, maxWidth: PARKING_COL_W }}
+                className="bg-surface-inset text-muted-soft text-[12px] font-semibold h-11 px-2 border-b border-hairline text-center"
+              >
+                停车记录
+              </th>
               <th rowSpan={2} className="bg-surface-inset text-muted-soft text-[12px] font-semibold h-11 min-w-12 px-2 border-b border-hairline" />
             </tr>
             {/* 第二行：字段标题 */}
@@ -510,7 +704,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={schema.length + 2} className="text-center text-muted py-16 bg-surface-panel">
+                <td colSpan={schema.length + 3} className="text-center text-muted py-16 bg-surface-panel">
                   暂无数据，点击「新增行」开始录入
                 </td>
               </tr>
@@ -531,7 +725,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                 {schema.map((field, colIdx) => {
                   const isEditing = editing?.row === rowIdx && editing?.col === colIdx;
                   const value = row.data[field.id];
-                  const changed = row._state !== 'saved';
+                  const cellChanged = isCellChanged(row, field);
                   const isFrozen = colIdx < FROZEN_COLS;
                   const isNumber = field.type === 'number';
                   const gIdx = fieldGroupIdx[colIdx];
@@ -638,8 +832,8 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                               ? 'text-muted-faint'
                               : isFrozen
                                 ? 'text-ink font-medium'
-                                : changed
-                                  ? 'text-ink font-medium'
+                                : cellChanged
+                                  ? 'text-warning font-semibold'
                                   : 'text-body',
                             // 数字与文本统一居中（与表头一致）
                             isNumber ? 'tnum text-center' : 'text-center',
@@ -651,6 +845,17 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
                     </td>
                   );
                 })}
+                <td className="px-2 h-11 border-b border-r border-hairline-soft text-center bg-surface-panel">
+                  <button
+                    onClick={() => openParkingEditor(rowIdx)}
+                    className="inline-flex max-w-full items-center justify-center rounded-md border border-hairline px-2.5 py-1 text-[12px] font-medium text-body hover:text-ink hover:bg-surface-soft transition-colors"
+                    title="查看或编辑停车记录"
+                  >
+                    {parseParkingRecords(row.data.parkingRecords ?? '', typeof row.data.field_date === 'string' ? row.data.field_date : '').length > 0
+                      ? `${parseParkingRecords(row.data.parkingRecords ?? '', typeof row.data.field_date === 'string' ? row.data.field_date : '').length} 条记录`
+                      : '无记录'}
+                  </button>
+                </td>
                 {/* 删除 */}
                 <td className="px-2 h-11 border-b border-hairline-soft text-center bg-surface-panel">
                   <button
@@ -666,6 +871,86 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
           </tbody>
         </table>
       </div>
+
+      <Dialog open={!!parkingEditor} onOpenChange={(open) => !open && setParkingEditor(null)}>
+        <DialogContent className="w-[min(92vw,680px)]">
+          <DialogHeader>
+            <DialogTitle>编辑停车记录</DialogTitle>
+            <DialogDescription>把停车时间和原因拆开编辑，保存后会写回这条表格记录。</DialogDescription>
+          </DialogHeader>
+          <DialogBody className="max-h-[70vh] overflow-y-auto">
+            {parkingEditor?.records.map((record, idx) => (
+              <div key={idx} className="rounded-md border border-hairline-soft bg-surface-soft p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-semibold text-ink">记录 {idx + 1}</span>
+                  {parkingEditor.records.length > 1 && (
+                    <Button size="sm" variant="ghost" onClick={() => removeParkingRecord(idx)}>
+                      删除
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <label className="space-y-1">
+                    <span className="text-[11px] text-muted-soft">开始日期</span>
+                    <input
+                      type="date"
+                      value={record.startDate}
+                      onChange={(e) => updateParkingRecord(idx, { startDate: e.target.value })}
+                      className="bloom h-10 w-full px-3 text-[13px] text-ink bg-canvas border border-hairline rounded-md"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[11px] text-muted-soft">开始时间</span>
+                    <input
+                      type="time"
+                      value={record.startTime}
+                      onChange={(e) => updateParkingRecord(idx, { startTime: e.target.value })}
+                      className="bloom h-10 w-full px-3 text-[13px] text-ink bg-canvas border border-hairline rounded-md"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[11px] text-muted-soft">结束日期</span>
+                    <input
+                      type="date"
+                      value={record.endDate}
+                      onChange={(e) => updateParkingRecord(idx, { endDate: e.target.value })}
+                      className="bloom h-10 w-full px-3 text-[13px] text-ink bg-canvas border border-hairline rounded-md"
+                    />
+                  </label>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="space-y-1">
+                    <span className="text-[11px] text-muted-soft">结束时间</span>
+                    <input
+                      type="time"
+                      value={record.endTime}
+                      onChange={(e) => updateParkingRecord(idx, { endTime: e.target.value })}
+                      className="bloom h-10 w-full px-3 text-[13px] text-ink bg-canvas border border-hairline rounded-md"
+                    />
+                  </label>
+                </div>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-muted-soft">原因</span>
+                  <input
+                    type="text"
+                    value={record.reason}
+                    onChange={(e) => updateParkingRecord(idx, { reason: e.target.value })}
+                    placeholder="请输入停车、检修或切换原因"
+                    className="bloom h-10 w-full px-3 text-[13px] text-ink bg-canvas border border-hairline rounded-md"
+                  />
+                </label>
+              </div>
+            ))}
+            <Button variant="outline" className="w-full" onClick={addParkingRecord}>
+              新增停车记录
+            </Button>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setParkingEditor(null)}>取消</Button>
+            <Button onClick={saveParkingRecords}>保存停车记录</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

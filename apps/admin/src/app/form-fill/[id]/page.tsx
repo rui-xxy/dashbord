@@ -27,10 +27,13 @@ export default function FormFillPage() {
 
   useEffect(() => {
     if (!params.id) return;
-    Promise.all([api.forms.getPublic(params.id), api.forms.getRecent(params.id).catch(() => [])])
-      .then(([f, r]) => {
+    Promise.all([
+      api.forms.getPublic(params.id),
+      api.forms.listPublicSubmissions(params.id, { page: '1', pageSize: '1000' }).catch(() => ({ items: [] })),
+    ])
+      .then(([f, submissions]) => {
         setForm(f);
-        setRecent(r);
+        setRecent(submissions.items);
       })
       .catch((e) => setError(e instanceof Error ? e.message : '加载失败'))
       .finally(() => setLoading(false));

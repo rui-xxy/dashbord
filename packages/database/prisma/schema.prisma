@@ -58,6 +58,7 @@ model FormSubmission {
   data        String   // JSON 字符串：{ field_date: "2026-08-11", tank_98-1: 82.5, ... }
   submitterIp String?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
   @@index([formId, createdAt])
 }

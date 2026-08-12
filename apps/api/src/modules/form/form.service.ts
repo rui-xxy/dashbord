@@ -74,7 +74,7 @@ export class FormService {
   async listRecentSubmissions(formId: string, limit = 5) {
     const items = await this.prisma.formSubmission.findMany({
       where: { formId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
       take: limit,
     });
     return items.map(toSubmissionVo);
@@ -93,6 +93,29 @@ export class FormService {
       this.prisma.formSubmission.findMany({
         where,
         orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.formSubmission.count({ where }),
+    ]);
+    return {
+      items: items.map(toSubmissionVo),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  /** 公开端提交记录列表（仅已发布表单） */
+  async listPublicSubmissions(formId: string, q: FormPaginationQuery) {
+    await this.findPublicById(formId);
+    const { page, pageSize } = q;
+    const where: Prisma.FormSubmissionWhereInput = { formId };
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.formSubmission.findMany({
+        where,
+        orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
