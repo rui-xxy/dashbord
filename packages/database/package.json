@@ -8,9 +8,13 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
+    "prisma:generate:pg": "prisma generate --schema=./prisma/schema.postgres.prisma",
     "prisma:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
     "prisma:push": "prisma db push --schema=./prisma/schema.prisma",
+    "prisma:push:pg": "prisma db push --schema=./prisma/schema.postgres.prisma",
     "db:seed": "tsx prisma/seed.ts",
+    "db:rename-field-ids": "tsx prisma/rename-field-ids.ts",
+    "db:migrate:pg": "tsx prisma/migrate-sqlite-to-postgres.ts",
     "db:reset": "prisma migrate reset --schema=./prisma/schema.prisma --force"
   },
   "dependencies": {

@@ -13,6 +13,9 @@
     "db:migrate": "pnpm --filter @hgbord/database prisma:migrate",
     "db:push": "pnpm --filter @hgbord/database prisma:push",
     "db:seed": "pnpm --filter @hgbord/database db:seed",
+    "db:rename-field-ids": "pnpm --filter @hgbord/database db:rename-field-ids",
+    "db:push:pg": "pnpm --filter @hgbord/database prisma:push:pg",
+    "db:migrate:pg": "pnpm --filter @hgbord/database db:migrate:pg",
     "db:studio": "pnpm --filter @hgbord/database prisma studio",
     "prisma:generate": "pnpm --filter @hgbord/database prisma:generate"
   },

@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/postgres-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  phone        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("STAFF")
+  status       String   @default("ACTIVE")
+  avatarUrl    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([role])
+  @@index([status])
+}
+
+model Form {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  schema      String
+  status      String           @default("published")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  submissions FormSubmission[]
+
+  @@index([status])
+}
+
+model FormSubmission {
+  id          String   @id @default(cuid())
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId      String
+  data        String
+  submitterIp String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@index([formId, createdAt])
+}

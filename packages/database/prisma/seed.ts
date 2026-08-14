@@ -10,6 +10,8 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+process.env.DATABASE_URL ??= 'file:./dev.db';
+
 const prisma = new PrismaClient();
 
 function stringifyJson(value: unknown) {
@@ -36,33 +38,33 @@ const SULFURIC_SCHEMA = [
   { id: 'field_date', title: '日期', type: 'date', group: '基础', hidden: true, required: true, placeholder: '请选择日期', description: '数据归属日期' },
 
   // ── 98%硫酸 储罐液位（%）──
-  { id: 'tank_98-1', title: '2#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
-  { id: 'tank_98-2', title: '3#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
-  { id: 'tank_98-3', title: '4#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
-  { id: 'tank_98-4', title: '拨酸槽', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 80 },
+  { id: 'acid98_tank_2', title: '2#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
+  { id: 'acid98_tank_3', title: '3#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
+  { id: 'acid98_tank_4', title: '4#', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 70 },
+  { id: 'acid98_transfer_tank', title: '拨酸槽', type: 'number', group: '98%硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 98酸', width: 80 },
 
   // ── 发烟硫酸 储罐液位（%）──
-  { id: 'tank_fy-1', title: '1#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 70 },
-  { id: 'tank_fy-2', title: '5#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 70 },
-  { id: 'tank_fy-3', title: '烟酸拨酸槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 90 },
-  { id: 'tank_fy-4', title: '氨基磺酸转运槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 110 },
+  { id: 'fuming_acid_tank_1', title: '1#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 70 },
+  { id: 'fuming_acid_tank_5', title: '5#', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 70 },
+  { id: 'fuming_acid_transfer_tank', title: '烟酸拨酸槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 90 },
+  { id: 'amino_transfer_tank', title: '氨基磺酸转运槽', type: 'number', group: '发烟硫酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 发烟硫酸', width: 110 },
 
   // ── 试剂酸 储罐液位（%）──
-  { id: 'tank_jp-1', title: '1#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
-  { id: 'tank_jp-2', title: '2#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
-  { id: 'tank_jp-3', title: '3#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
-  { id: 'tank_jp-4', title: '4#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
+  { id: 'reagent_acid_tank_1', title: '1#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
+  { id: 'reagent_acid_tank_2', title: '2#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
+  { id: 'reagent_acid_tank_3', title: '3#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
+  { id: 'reagent_acid_tank_4', title: '4#', type: 'number', group: '试剂酸', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 试剂酸', width: 70 },
 
   // ── 其他储罐 ──
-  { id: 'tank_syc-1', title: '双氧水储罐', type: 'number', group: '其他储罐', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 双氧水', width: 100 },
+  { id: 'hydrogen_peroxide_tank', title: '双氧水储罐', type: 'number', group: '其他储罐', precision: 1, unit: '%', suffix: '%', min: 0, max: 100, step: 0.1, placeholder: '请输入液位', description: '物料: 双氧水', width: 100 },
 
   // ── 仪表读数（电表度数）──
-  { id: 'meter_3', title: '1#电机', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
-  { id: 'meter_4', title: '2#电机', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
-  { id: 'meter_5', title: '1#电炉', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
-  { id: 'meter_6', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
-  { id: 'meter_mgso4_phase2', title: '硫酸镁二期电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 120 },
-  { id: 'meter_amino', title: '氨基磺酸电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 110 },
+  { id: 'power_meter_motor_1', title: '1#电机', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'power_meter_motor_2', title: '2#电机', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'power_meter_furnace_1', title: '1#电炉', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'power_meter_furnace_2', title: '2#电炉', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 80 },
+  { id: 'power_meter_mgso4_phase2', title: '硫酸镁二期电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 120 },
+  { id: 'power_meter_amino', title: '氨基磺酸电表', type: 'number', group: '仪表读数', precision: 2, suffix: '千瓦时', min: 0, step: 0.01, placeholder: '请输入读数', description: '类型: 电表', width: 110 },
 ];
 
 // ═══════════════════════════════════════════════════════════
@@ -95,25 +97,25 @@ function genSubmissionData(dayIdx: number): Record<string, string | number | nul
 
   return {
     field_date: dateStr,
-    'tank_98-1': level(82, dayIdx, 6),
-    'tank_98-2': level(75, dayIdx, 5),
-    'tank_98-3': level(68, dayIdx, 7),
-    'tank_98-4': level(88, dayIdx, 4),
-    'tank_fy-1': level(70, dayIdx, 8),
-    'tank_fy-2': level(65, dayIdx, 6),
-    'tank_fy-3': level(72, dayIdx, 5),
-    'tank_fy-4': level(80, dayIdx, 7),
-    'tank_jp-1': level(55, dayIdx, 9),
-    'tank_jp-2': level(62, dayIdx, 6),
-    'tank_jp-3': level(48, dayIdx, 8),
-    'tank_jp-4': level(70, dayIdx, 5),
-    'tank_syc-1': level(78, dayIdx, 6),
-    meter_3: meterReading(12480, dayIdx, 320),
-    meter_4: meterReading(9820, dayIdx, 240),
-    meter_5: meterReading(4560, dayIdx, 110),
-    meter_6: meterReading(3120, dayIdx, 85),
-    meter_mgso4_phase2: meterReading(2840, dayIdx, 70),
-    meter_amino: meterReading(1560, dayIdx, 42),
+    acid98_tank_2: level(82, dayIdx, 6),
+    acid98_tank_3: level(75, dayIdx, 5),
+    acid98_tank_4: level(68, dayIdx, 7),
+    acid98_transfer_tank: level(88, dayIdx, 4),
+    fuming_acid_tank_1: level(70, dayIdx, 8),
+    fuming_acid_tank_5: level(65, dayIdx, 6),
+    fuming_acid_transfer_tank: level(72, dayIdx, 5),
+    amino_transfer_tank: level(80, dayIdx, 7),
+    reagent_acid_tank_1: level(55, dayIdx, 9),
+    reagent_acid_tank_2: level(62, dayIdx, 6),
+    reagent_acid_tank_3: level(48, dayIdx, 8),
+    reagent_acid_tank_4: level(70, dayIdx, 5),
+    hydrogen_peroxide_tank: level(78, dayIdx, 6),
+    power_meter_motor_1: meterReading(12480, dayIdx, 320),
+    power_meter_motor_2: meterReading(9820, dayIdx, 240),
+    power_meter_furnace_1: meterReading(4560, dayIdx, 110),
+    power_meter_furnace_2: meterReading(3120, dayIdx, 85),
+    power_meter_mgso4_phase2: meterReading(2840, dayIdx, 70),
+    power_meter_amino: meterReading(1560, dayIdx, 42),
     parkingRecords: parkingForDay(dayIdx),
   };
 }

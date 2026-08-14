@@ -55,7 +55,7 @@ model FormSubmission {
   id          String   @id @default(cuid())
   form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId      String
-  data        String   // JSON 字符串：{ field_date: "2026-08-11", tank_98-1: 82.5, ... }
+  data        String   // JSON 字符串：{ field_date: "2026-08-11", acid98_tank_2: 82.5, ... }
   submitterIp String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
