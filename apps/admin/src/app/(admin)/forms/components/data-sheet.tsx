@@ -572,7 +572,7 @@ export function DataSheet({ formId, schema, submissions }: DataSheetProps) {
   const addParkingRecord = useCallback(() => {
     setParkingEditor((prev) => {
       if (!prev) return prev;
-      const fallbackDate = prev.records[prev.records.length - 1]?.date ?? '';
+      const fallbackDate = prev.records[prev.records.length - 1]?.startDate ?? '';
       return { ...prev, records: [...prev.records, createEmptyParkingRecord(fallbackDate)] };
     });
   }, []);

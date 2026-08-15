@@ -7,10 +7,8 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import {
   CreateUserDto,
   PaginationQuery,
@@ -26,10 +24,16 @@ import {
 } from '../../common/decorators';
 import { JwtAuthGuard } from '../../common/jwt.guard';
 import { PermissionsGuard } from '../../common/roles.guard';
+import { TargetUserGuard } from '../../common/target-user.guard';
 import { ZodValidationPipe } from '../../common/zod.pipe';
 import { UserService } from './user.service';
 
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+/**
+ * 守卫链顺序：JWT 鉴权 → 目标用户预加载 → 权限（含严格层级判断）
+ * TargetUserGuard 把 :id 对应的用户挂到 req.targetUser，PermissionsGuard
+ * 据此执行「只能动比自己级别低的人，同级/上级一律 403」。
+ */
+@UseGuards(JwtAuthGuard, TargetUserGuard, PermissionsGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly users: UserService) {}
@@ -72,7 +76,6 @@ export class UserController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(UpdateUserRoleDto)) dto: UpdateUserRoleDto,
     @CurrentUser() actor: AuthUser,
-    @Req() req: Request & { targetUser?: { role: string } },
   ) {
     return this.users.updateRole(id, dto, actor);
   }

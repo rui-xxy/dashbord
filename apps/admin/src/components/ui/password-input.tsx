@@ -1,5 +1,5 @@
 'use client';
-import { useState, type InputHTMLAttributes } from 'react';
+import { useState, type CSSProperties, type InputHTMLAttributes } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -21,7 +21,7 @@ export function PasswordInput({
     <div className="relative w-full">
       <input
         type="text"
-        style={visible ? undefined : { WebkitTextSecurity: 'disc' }}
+        style={visible ? undefined : ({ WebkitTextSecurity: 'disc' } as CSSProperties)}
         className={cn(
           'bloom h-10 w-full px-3.5 pr-10 text-[14px] text-ink bg-canvas border border-hairline rounded-md',
           'placeholder:text-muted-soft transition-all duration-120 ease-out-expo',

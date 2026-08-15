@@ -68,8 +68,38 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }, [pathname, user, collapsed]);
 
   if (loading || !user) {
+    // 骨架屏 —— 与真实布局同形（侧栏 + 顶栏 + 内容区），
+    // 未登录被踢走前看到的是正常加载态而非白屏闪烁
     return (
-      <div className="h-screen flex items-center justify-center text-muted text-[13px]">加载中…</div>
+      <div className="h-screen flex overflow-hidden">
+        {/* 侧栏骨架 */}
+        <aside className="shrink-0 w-[236px] bg-sidebar border-r border-hairline flex flex-col">
+          <div className="h-16 flex items-center gap-2.5 border-b border-hairline px-5">
+            <div className="w-7 h-7 rounded-md bg-surface-strong animate-pulse" />
+            <div className="h-4 w-16 rounded-sm bg-surface-strong animate-pulse" />
+          </div>
+          <div className="p-4 space-y-1">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-11 rounded-md bg-surface-strong/60 animate-pulse" />
+            ))}
+          </div>
+          <div className="mt-auto p-3 border-t border-hairline">
+            <div className="h-12 rounded-md bg-surface-strong/40 animate-pulse" />
+          </div>
+        </aside>
+        {/* 主区骨架 */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-16 bg-canvas border-b border-hairline flex items-center px-8 gap-3">
+            <div className="h-4 w-32 rounded-sm bg-surface-strong animate-pulse" />
+          </header>
+          <main className="flex-1 p-8">
+            <div className="max-w-[1200px] mx-auto space-y-4">
+              <div className="h-7 w-44 rounded-sm bg-surface-strong animate-pulse" />
+              <div className="h-64 rounded-lg bg-surface-strong/40 animate-pulse" />
+            </div>
+          </main>
+        </div>
+      </div>
     );
   }
 
